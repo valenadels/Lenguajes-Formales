@@ -29,11 +29,11 @@
 (declare operador?)                       ; IMPLEMENTAR
 (declare anular-invalidos)                ; IMPLEMENTAR
 (declare cargar-linea)                    ; IMPLEMENTAR
-(declare expandir-nexts)                  ; IMPLEMENTAR
-(declare dar-error)                       ; IMPLEMENTAR
-(declare variable-float?)                 ; IMPLEMENTAR
-(declare variable-integer?)               ; IMPLEMENTAR
-(declare variable-string?)                ; IMPLEMENTAR
+(declare expandir-nexts)                  ; IMPLEMENTAR done
+(declare dar-error)                       ; IMPLEMENTAR 
+(declare variable-float?)                 ; IMPLEMENTAR done
+(declare variable-integer?)               ; IMPLEMENTAR done
+(declare variable-string?)                ; IMPLEMENTAR done
 (declare contar-sentencias)               ; IMPLEMENTAR
 (declare buscar-lineas-restantes)         ; IMPLEMENTAR
 (declare continuar-linea)                 ; IMPLEMENTAR
@@ -43,8 +43,8 @@
 (declare desambiguar)                     ; IMPLEMENTAR
 (declare precedencia)                     ; IMPLEMENTAR
 (declare aridad)                          ; IMPLEMENTAR
-(declare eliminar-cero-decimal)           ; IMPLEMENTAR
-(declare eliminar-cero-entero)            ; IMPLEMENTAR
+(declare eliminar-cero-decimal)           ; IMPLEMENTAR done
+(declare eliminar-cero-entero)            ; IMPLEMENTAR done
 
 (defn -main
   [& args]
@@ -72,7 +72,7 @@
   ([amb]
    (prn) (println "READY.") (flush)
    (try (let [linea (string-a-tokens (read-line)), cabeza (first linea)]
-          (cond (= cabeza '(EXIT)) 'GOODBYE
+          (cond (= cabeza '(EXIT)) (println 'GOODBYE)
                 (= cabeza '(ENV)) (do (prn amb) (flush) (driver-loop amb))
                 (integer? cabeza) (if (and (>= cabeza 0) (<= cabeza 63999))
                                     (driver-loop (cargar-linea linea amb))
@@ -659,6 +659,34 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn anular-invalidos [sentencia])
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; añade la linea-agregar en el lugar correspondiente de lineas-actuales
+; si el numero de linea es menor al primero, se agrega al principio
+; si el numero de linea es mayor al ultimo, se agrega al final
+; si el numero de linea ya existe, se agrega en la posicion correspondiente, se reemplaza
+; si el numero de linea no existe, se agrega en la posicion correspondiente
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn agregar-linea [num-linea lineas-actuales linea-agregar]
+  (if (empty? lineas-actuales)
+    (list (list num-linea linea-agregar))
+    (let [num-actuales (map first lineas-actuales)]
+      (cond
+        (< num-linea (first num-actuales))
+        (conj (list (list num-linea linea-agregar)) (vec lineas-actuales))
+        (> num-linea (last num-actuales))
+        (conj (vec lineas-actuales) (list num-linea linea-agregar))
+        :else
+        (let [num-actuales-idx (map-indexed list num-actuales)
+              posicion-insertar (first (filter #(= num-linea (second %)) num-actuales-idx))]
+          (if (nil? posicion-insertar)
+            (let [posicion-insertar (last (filter #(> num-linea (second %)) num-actuales-idx))]
+              (conj (vec (take posicion-insertar lineas-actuales))
+                      (list (list num-linea linea-agregar))
+                      (drop posicion-insertar lineas-actuales)))
+            (assoc lineas-actuales posicion-insertar (list num-linea linea-agregar))))))))
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; cargar-linea: recibe una linea de codigo y un ambiente y retorna
 ; el ambiente actualizado, por ejemplo:
@@ -671,7 +699,13 @@
 ; user=> (cargar-linea '(15 (X = X - 1)) ['((10 (PRINT X)) (15 (X = X + 1)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}])
 ; [((10 (PRINT X)) (15 (X = X - 1)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn cargar-linea [linea amb])
+(defn cargar-linea [linea amb]
+  (let [nro-linea (first linea)
+        sentencia (second linea)
+        prog-mem (first amb)
+        rest-amb (rest amb)]
+    (into (vec (list (agregar-linea nro-linea prog-mem sentencia))) rest-amb)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; expandir-nexts: recibe una lista de sentencias y la devuelve con
@@ -726,7 +760,10 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-float? [x]
-  (float? x))
+  (and (symbol? x)
+       (re-matches #"[A-Za-z]\w*" (name x))))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-integer?: predicado para determinar si un identificador
@@ -800,7 +837,7 @@
 ; user=> (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [25 0] [] [] [] 0 {}])
 ; nil
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn buscar-lineas-restantes [])
+(defn buscar-lineas-restantes [amb])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; continuar-linea: implementa la sentencia RETURN, retornando una
