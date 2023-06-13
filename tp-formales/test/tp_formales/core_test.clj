@@ -4,13 +4,25 @@
 
 (deftest variable-string?-test
   (testing "Prueba de la funcion: variable-string?"
-    (is (= true (variable-string? "x"))))
-  (is (= false (variable-string? 1))))
+    (is (= true (variable-string? 'X$))))
+  (is (= false (variable-string? 'X)))
+  (is (= false (variable-string? 'X%)))
+  (is (= false (variable-string? "X$"))))
 
 (deftest variable-integer?-test
   (testing "Prueba de la funcion: variable-integer?"
-    (is (= true (variable-integer? 1))))
-  (is (= false (variable-integer? "x"))))
+    (is (= false (variable-integer? 'X)))
+    (is (= true (variable-integer? 'X%)))
+    (is (= false (variable-integer? 'X$)))
+    (is (= false (variable-integer? "x")))))
+
+(deftest variable-float?-test
+  (testing "Prueba de la funcion: variable-float?"
+    (is (= true (variable-float? 'X)))
+    (is (= false (variable-float? 'X%)))
+    (is (= false (variable-float? 'X$)))
+    (is (= false (variable-float? "x")))))
+     
 
 
 ;; (deftest variable-float?-test
@@ -55,6 +67,52 @@
   ;;agregar al medio
   (is (= (cargar-linea '(15 (X = X + 1)) ['((10 (PRINT X)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}])
          ['((10 (PRINT X)) (15 (X = X + 1)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}]))
-
+  
+  ;;reemplazar
   (is (= (cargar-linea '(15 (X = X - 1))  ['((10 (PRINT X)) (15 (X = X + 1)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}])
          ['((10 (PRINT X)) (15 (X = X - 1)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}])))
+
+(deftest operador?-test
+  (testing "Prueba de la funcion: operador?"
+    (is (= true (operador? '+)))
+    (is (= true (operador? '-)))
+    (is (= true (operador? '*)))
+    (is (= true (operador? '/)))
+    (is (= false (operador? '%)))
+    (is (= true (operador? '=)))
+    (is (= true (operador? '<>)))
+    (is (= true (operador? '<)))
+    (is (= true (operador? '<=)))
+    (is (= true (operador? '>)))
+    (is (= true (operador? '>=)))
+    (is (= true (operador? 'AND)))
+    (is (= true (operador? 'OR)))
+    (is (= false (operador? 'X)))
+    (is (= false (operador? 1)))
+    (is (= false (operador? 1.0)))
+    (is (= false (operador? "X"))))
+    (is (= true (operador? "+"))))
+
+(deftest palabra-reservada?-test
+  (testing "Prueba de la funcion: palabra-reservada?" 
+    (is (= true (palabra-reservada? 'IF)))
+    (is (= true (palabra-reservada? 'THEN)))
+    (is (= false (palabra-reservada? 'ELSE)))
+    (is (= false (palabra-reservada? 'ENDIF)))
+    (is (= false (palabra-reservada? 'WHILE)))
+    (is (= true (palabra-reservada? 'PRINT)))
+    (is (= true (palabra-reservada? 'EXIT)))
+    (is (= true (palabra-reservada? 'NEXT)))
+    (is (= true (palabra-reservada? 'FOR)))
+    (is (= false (palabra-reservada? 1)))
+    (is (= false (palabra-reservada? 1.0)))
+    (is (= false (palabra-reservada? "X")))
+    (is (= true (palabra-reservada?  'MID))))) ;va con $?
+
+(deftest dar-error-test
+  (testing "Prueba de la funcion: dar-error"
+    (is (= (dar-error 16 [:ejecucion-inmediata 4]) nil))
+    (is (= (dar-error "?ERROR DISK FULL" [:ejecucion-inmediata 4]) nil))
+    (is (= (dar-error 16 [100 3]) nil))
+    (is (= (dar-error "?ERROR DISK FULL" [100 3]) nil))))
+

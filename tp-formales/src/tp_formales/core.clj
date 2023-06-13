@@ -25,12 +25,12 @@
 (declare evaluar)                         ; COMPLETAR
 (declare aplicar)                         ; COMPLETAR
 
-(declare palabra-reservada?)              ; IMPLEMENTAR
-(declare operador?)                       ; IMPLEMENTAR
+(declare palabra-reservada?)              ; IMPLEMENTAR done
+(declare operador?)                       ; IMPLEMENTAR done
 (declare anular-invalidos)                ; IMPLEMENTAR
-(declare cargar-linea)                    ; IMPLEMENTAR
+(declare cargar-linea)                    ; IMPLEMENTAR done
 (declare expandir-nexts)                  ; IMPLEMENTAR done
-(declare dar-error)                       ; IMPLEMENTAR 
+(declare dar-error)                       ; IMPLEMENTAR done
 (declare variable-float?)                 ; IMPLEMENTAR done
 (declare variable-integer?)               ; IMPLEMENTAR done
 (declare variable-string?)                ; IMPLEMENTAR done
@@ -45,6 +45,7 @@
 (declare aridad)                          ; IMPLEMENTAR
 (declare eliminar-cero-decimal)           ; IMPLEMENTAR done
 (declare eliminar-cero-entero)            ; IMPLEMENTAR done
+(declare spy)
 
 (defn -main
   [& args]
@@ -637,7 +638,11 @@
 ; user=> (palabra-reservada? 'SPACE)
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn palabra-reservada? [x])
+(defn palabra-reservada? [x] ;DUDA: MID que va con $ la deberia matchear con $?
+  (let [palabras-reservadas #{"EXIT" "ENV" "DATA" "REM" "NEW" "CLEAR" "LIST" "RUN" "LOAD" "SAVE" "LET" "AND" "OR" "NOT" "ABS" "SGN" "INT" "SQR" "SIN" "COS" "TAN" "ATN" "EXP" "LOG" "LEN" "LEFT" "MID" "RIGHT" "STR" "VAL" "CHR" "ASC" "GOTO" "ON" "IF" "THEN" "FOR" "TO" "STEP" "NEXT" "GOSUB" "RETURN" "END" "INPUT" "READ" "RESTORE" "PRINT"}]
+    (cond
+      (symbol? x) (contains? palabras-reservadas (str x))
+      :else false)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; operador?: predicado para determinar si un identificador es un
@@ -649,7 +654,13 @@
 ; user=> (operador? (symbol "%"))
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn operador? [x])
+(defn operador? [x]
+  (let [operadores  #{"+" "-" "*" "/" "^" "<" "=" ">" ">=" "<=" "<>" "AND" "OR" "NOT"}] ; DUDA XOR??
+                    
+  (cond
+    (string? x) (contains? operadores x)
+    (symbol? x) (contains? operadores (str x))
+    :else false)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; anular-invalidos: recibe una lista de simbolos y la retorna con
@@ -671,19 +682,21 @@
     (list (list num-linea linea-agregar))
     (let [num-actuales (map first lineas-actuales)]
       (cond
-        (< num-linea (first num-actuales))
+        (< num-linea (first num-actuales)) ;agregar al principio
         (conj (list (list num-linea linea-agregar)) (vec lineas-actuales))
-        (> num-linea (last num-actuales))
+        (> num-linea (last num-actuales)) ;agregar al final
         (conj (vec lineas-actuales) (list num-linea linea-agregar))
         :else
         (let [num-actuales-idx (map-indexed list num-actuales)
-              posicion-insertar (first (filter #(= num-linea (second %)) num-actuales-idx))]
-          (if (nil? posicion-insertar)
-            (let [posicion-insertar (last (filter #(> num-linea (second %)) num-actuales-idx))]
-              (conj (vec (take posicion-insertar lineas-actuales))
+              elemento-misma-posicion (first (filter #(= num-linea (second %)) num-actuales-idx))]
+          (if (nil? elemento-misma-posicion) ;agregar al medio:
+            (let [elemento-previo (last (filter #(> num-linea (second %)) num-actuales-idx))
+                  indice-insertar  (inc (first elemento-previo))]
+              (concat (take indice-insertar lineas-actuales)
                       (list (list num-linea linea-agregar))
-                      (drop posicion-insertar lineas-actuales)))
-            (assoc lineas-actuales posicion-insertar (list num-linea linea-agregar))))))))
+                      (drop indice-insertar lineas-actuales)))
+            ;reemplazar:
+            (assoc (vec lineas-actuales) (first elemento-misma-posicion) (list num-linea linea-agregar))))))))
 
 
 
@@ -747,7 +760,18 @@
 ;
 ; ?ERROR DISK FULL IN 100nil
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn dar-error [cod prog-ptrs])
+(defn dar-error [cod prog-ptrs]
+  (cond
+    (integer? cod)
+    (let [mensaje-error (buscar-mensaje cod)]
+      (if (integer? (first prog-ptrs))
+        (println (str mensaje-error " IN " (first prog-ptrs)))
+        (println mensaje-error)))
+  
+    (string? cod) (if (integer? (first prog-ptrs))
+                    (println (str cod " IN " (first prog-ptrs)))
+                    (println cod)))
+   nil) ;;duda, el nil lo tengo q imprimir?
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-float?: predicado para determinar si un identificador
@@ -760,10 +784,9 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-float? [x]
-  (and (symbol? x)
-       (re-matches #"[A-Za-z]\w*" (name x))))
-
-
+    (and (symbol? x)
+    (not (or (variable-integer? x) (variable-string? x)))))
+  
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-integer?: predicado para determinar si un identificador
@@ -776,7 +799,9 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-integer? [x]
-  (int? x))
+  (and (symbol? x)
+  (= (last (str x)) \%)))
+      
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-string?: predicado para determinar si un identificador
@@ -789,7 +814,8 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-string? [x]
-  (string? x))
+    (and (symbol? x)
+    (= (last (str x)) \$)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; contar-sentencias: recibe un numero de linea y un ambiente y
@@ -861,7 +887,11 @@
 ; user=> (extraer-data (list '(10 (PRINT X) (REM ESTE NO) (DATA 30)) '(20 (DATA HOLA)) (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20))))
 ; ("HOLA" "MUNDO" 10 20)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn extraer-data [prg])
+(defn extraer-data [prg]
+  (cond
+    (empty? prg) ()
+    (and (list? (first prg)) (= (first (first prg)) 'DATA)) (concat (rest (first prg)) (extraer-data (rest prg)))
+    :else (extraer-data (rest prg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; ejecutar-asignacion: recibe una asignacion y un ambiente, y
@@ -918,7 +948,9 @@
 ; user=> (precedencia 'MID$)
 ; 8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn precedencia [token])
+(defn precedencia [token]
+  ;(case )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; aridad: recibe un token y retorna el valor de su aridad, por
@@ -935,6 +967,7 @@
 ; 3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn aridad [token])
+ ; [let tokens-aridad-1 ])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; eliminar-cero-decimal: recibe un numero y lo retorna sin ceros
@@ -998,5 +1031,11 @@
                   :else (cond (pos? n) (str " " n)
                               :else (str n)))
     :else (str n)))
+
+
+(defn spy
+  ([x] (do (prn x) x))
+  ([msg x] (do (print msg) (print ": ") (prn x) x)))
+
 
 true
