@@ -662,8 +662,13 @@
     (symbol? x) (contains? operadores (str x))
     :else false)))
 
-(defn variable? [x]
-  (or (variable-float? x) (variable-string? x) (variable-integer? x)))
+ 
+(defn validar-variable [x] 
+  (let [regex #"^[a-zA-Z][a-zA-Z0-9]*$"]
+    (re-matches regex (str x))))
+
+(defn variables? [x] 
+  (and (or (variable-float? x) (variable-string? x) (variable-integer? x)) (validar-variable x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; anular-invalidos: recibe una lista de simbolos y la retorna con
@@ -672,7 +677,7 @@
 ; (IF X nil * Y < 12 THEN LET nil X = 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn anular-invalidos [sentencia]
-  (map #(if (or (palabra-reservada? %) (variable? %) (number? %) (string? %) (operador? (str %))) % nil) sentencia))
+  (map #(if  (or (palabra-reservada? %) (variables? %) (operador? (str %)) (number? %) (string? %)) % nil) sentencia))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; añade la linea-agregar en el lugar correspondiente de lineas-actuales
