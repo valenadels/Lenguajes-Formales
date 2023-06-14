@@ -27,7 +27,7 @@
 
 (declare palabra-reservada?)              ; IMPLEMENTAR done
 (declare operador?)                       ; IMPLEMENTAR done
-(declare anular-invalidos)                ; IMPLEMENTAR
+(declare anular-invalidos)                ; IMPLEMENTAR done
 (declare cargar-linea)                    ; IMPLEMENTAR done
 (declare expandir-nexts)                  ; IMPLEMENTAR done
 (declare dar-error)                       ; IMPLEMENTAR done
@@ -655,7 +655,7 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn operador? [x]
-  (let [operadores  #{"+" "-" "*" "/" "^" "<" "=" ">" ">=" "<=" "<>" "AND" "OR" "NOT"}]
+  (let [operadores  #{"+" "-" "*" "/" "^" "<" "=" ">" ">=" "<=" "<>" "AND" "OR" "NOT" "-u"}]
                     
   (cond
     (string? x) (contains? operadores x)
@@ -774,13 +774,12 @@
     (integer? cod)
     (let [mensaje-error (buscar-mensaje cod)]
       (if (integer? (first prog-ptrs))
-        (println (str mensaje-error " IN " (first prog-ptrs)))
-        (println mensaje-error)))
+        (print (str mensaje-error " IN " (first prog-ptrs)))
+        (print mensaje-error)))
   
     (string? cod) (if (integer? (first prog-ptrs))
-                    (println (str cod " IN " (first prog-ptrs)))
-                    (println cod)))
-   nil) ;;duda, el nil lo tengo q imprimir?
+                    (print (str cod " IN " (first prog-ptrs)))
+                    (print cod)))) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-float?: predicado para determinar si un identificador
@@ -950,7 +949,7 @@
     (cond
       (= 'MID$ (first expr)) (let [mid-desambiguado (desambiguar-mid expr)]
                                (cons (first mid-desambiguado) (desambiguar-mas-menos (rest mid-desambiguado)))) 
-      :else (desambiguar-mas-menos expr))) ;duda usar desambiguar comas?
+      :else (desambiguar-mas-menos expr)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -985,7 +984,9 @@
 ; user=> (aridad 'MID3$)
 ; 3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn aridad [token])
+(defn aridad [token]) ;funciones (funciones y operadores)! que tienen aridad. usar reverse polac annotation
+;devuelve 0 en caso de no ser una funcion (caso else ) 
+;token es lo que da la funcion de analisis lexico
  ; [let tokens-aridad-1 ])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

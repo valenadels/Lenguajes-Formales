@@ -22,13 +22,7 @@
     (is (= false (variable-float? 'X%)))
     (is (= false (variable-float? 'X$)))
     (is (= false (variable-float? "x")))))
-     
-
-
-;; (deftest variable-float?-test
-;;   (testing "Prueba de la funcion: variable-float?"
-;;     (is (= true (variable-integer? 'X))))
-;;   (is (= false (variable-integer? 'X$))))
+    
 
 (deftest eliminar-cero-decimal-test
   (testing "Prueba de la funcion: eliminar-cero-decimal"
@@ -112,10 +106,10 @@
 
 (deftest dar-error-test
   (testing "Prueba de la funcion: dar-error"
-    (is (= (dar-error 16 [:ejecucion-inmediata 4]) nil))
-    (is (= (dar-error "?ERROR DISK FULL" [:ejecucion-inmediata 4]) nil))
-    (is (= (dar-error 16 [100 3]) nil))
-    (is (= (dar-error "?ERROR DISK FULL" [100 3]) nil))))
+    (is (= (with-out-str (dar-error 16 [:ejecucion-inmediata 4])) "?SYNTAX  ERROR"))
+    (is (= (with-out-str (dar-error "?ERROR DISK FULL" [:ejecucion-inmediata 4])) "?ERROR DISK FULL"))
+    (is (= (with-out-str (dar-error 16 [100 3])) "?SYNTAX  ERROR IN 100"))
+    (is (= (with-out-str (dar-error "?ERROR DISK FULL" [100 3])) "?ERROR DISK FULL IN 100"))))
 
 ;; (deftest preprocesar-expresion-test
 ;;   (testing "Prueba de la funcion: preprocesar-expresion")
@@ -136,4 +130,11 @@
 (deftest anular-invalidos-test
   (testing "Prueba de la funcion anular-invalidos"
     (is (= (anular-invalidos '(+ 1 2)) '(+ 1 2)))
-    (is (= (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0)) '(IF X nil * Y < 12 THEN LET nil X = 0)))))
+
+    (is (= (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0)) '(IF X nil * Y < 12 THEN LET nil X = 0)))
+
+    ;los nombres de variables pueden contener letras y numeros
+    (is (= (anular-invalidos '(IF X9 & * Y < 12 THEN LET ! X = 0)) '(IF X9 nil * Y < 12 THEN LET nil X = 0)))
+
+    ;los nombres de variables no pueden empezar con algo que no sea una letra
+    (is (= (anular-invalidos '(IF $X & * Y < 12 THEN LET ! X = 0)) '(IF nil nil * Y < 12 THEN LET nil X = 0)))))
