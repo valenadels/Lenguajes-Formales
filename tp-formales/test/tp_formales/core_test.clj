@@ -128,7 +128,7 @@
            (list 'MID3$ (symbol "(") 1 (symbol ",") '-u 2 '+ 'K (symbol ",") 3 (symbol ")"))))))
 
 (deftest anular-invalidos-test
-  (testing "Prueba de la funcion anular-invalidos"
+  (testing "Prueba de la funcion: anular-invalidos"
     (is (= (anular-invalidos '(+ 1 2)) '(+ 1 2)))
 
     (is (= (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0)) '(IF X nil * Y < 12 THEN LET nil X = 0)))
@@ -138,3 +138,14 @@
 
     ;los nombres de variables no pueden empezar con algo que no sea una letra
     (is (= (anular-invalidos '(IF $X & * Y < 12 THEN LET ! X = 0)) '(IF nil nil * Y < 12 THEN LET nil X = 0)))))
+
+(deftest precedencia-test
+  (testing "Prueba de la funcion: precendencia"
+    (is (= (precedencia 'OR) 1))
+    (is (= (precedencia 'AND) 2))
+    (is (= (precedencia 'NOT) 3))
+    (is (= (precedencia '=) 4))
+    (is (= (precedencia '-) 5))
+    (is (= (precedencia '/) 6))
+    (is (= (precedencia '-u) 7))
+    (is (= (precedencia 'MID$) 8))))

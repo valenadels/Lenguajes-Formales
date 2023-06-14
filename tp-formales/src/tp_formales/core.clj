@@ -639,7 +639,7 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn palabra-reservada? [x]
-  (let [palabras-reservadas #{"EXIT" "ENV" "DATA" "REM" "NEW" "CLEAR" "LIST" "RUN" "LOAD" "SAVE" "LET" "AND" "OR" "NOT" "ABS" "SGN" "INT" "SQR" "SIN" "COS" "TAN" "ATN" "EXP" "LOG" "LEN" "LEFT" "MID$" "RIGHT" "STR" "VAL" "CHR" "ASC" "GOTO" "ON" "IF" "THEN" "FOR" "TO" "STEP" "NEXT" "GOSUB" "RETURN" "END" "INPUT" "READ" "RESTORE" "PRINT"}]
+  (let [palabras-reservadas #{"EXIT" "ENV" "DATA" "REM" "NEW" "CLEAR" "LIST" "RUN" "LOAD" "SAVE" "LET" "AND" "OR" "NOT" "ABS" "SGN" "INT" "SQR" "SIN" "COS" "TAN" "ATN" "EXP" "LOG" "LEN" "LEFT$" "MID$" "RIGHT$" "STR$" "VAL" "CHR$" "ASC" "GOTO" "ON" "IF" "THEN" "FOR" "TO" "STEP" "NEXT" "GOSUB" "RETURN" "END" "INPUT" "READ" "RESTORE" "PRINT"}]
     (cond
       (symbol? x) (contains? palabras-reservadas (str x))
       :else false)))
@@ -951,6 +951,23 @@
                                (cons (first mid-desambiguado) (desambiguar-mas-menos (rest mid-desambiguado)))) 
       :else (desambiguar-mas-menos expr)))
 
+(defn precedencia-operador [token]
+  (cond
+    (= token '-u) 7
+    (or (= token '*)
+        (= token '/)) 6
+    (or (= token '+)
+        (= token '-)) 5
+    (or (= token '<)
+        (= token '<=)
+        (= token '>)
+        (= token '>=)
+        (= token '=)
+        (= token '<>)) 4
+    (= token 'NOT) 3
+    (= token 'AND) 2
+    (= token 'OR) 1))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; precedencia: recibe un token y retorna el valor de su
@@ -966,9 +983,10 @@
 ; user=> (precedencia 'MID$)
 ; 8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn precedencia [token]
-  ;(case )
-  )
+(defn precedencia [token] ; SI NO APARECE EN EL MANUAL ES 8, ES DECIR LAS FUNCIONES
+  (cond 
+    (operador? token) (precedencia-operador token)
+    :else 8))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; aridad: recibe un token y retorna el valor de su aridad, por
