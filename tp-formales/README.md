@@ -8,7 +8,7 @@ Download from http://example.com/FIXME.
 
 ## Usage
 
-FIXME: explanation
+`lein test`corre los tests
 
     $ java -jar tp-formales-0.1.0-standalone.jar [args]
 

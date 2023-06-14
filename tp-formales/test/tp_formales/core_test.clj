@@ -89,7 +89,8 @@
     (is (= true (operador? 'OR)))
     (is (= false (operador? 'X)))
     (is (= false (operador? 1)))
-    (is (= false (operador? 1.0)))
+    (is (= false (operador? "&")))
+    (is (= false (operador? "!")))
     (is (= false (operador? "X"))))
     (is (= true (operador? "+"))))
 
@@ -107,7 +108,7 @@
     (is (= false (palabra-reservada? 1)))
     (is (= false (palabra-reservada? 1.0)))
     (is (= false (palabra-reservada? "X")))
-    (is (= true (palabra-reservada?  'MID))))) ;va con $?
+    (is (= true (palabra-reservada?  'MID$)))))
 
 (deftest dar-error-test
   (testing "Prueba de la funcion: dar-error"
@@ -116,3 +117,23 @@
     (is (= (dar-error 16 [100 3]) nil))
     (is (= (dar-error "?ERROR DISK FULL" [100 3]) nil))))
 
+;; (deftest preprocesar-expresion-test
+;;   (testing "Prueba de la funcion: preprocesar-expresion")
+;;   (is (= (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]) '("HOLA" + " MUNDO" + "")))
+;;   (is (= (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}]) '(5 + 0 / 2 * 0))))
+
+(deftest desambiguar-tests
+  (testing "Prueba de la funcion: desambiguar"
+    (is (= (desambiguar (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")")))
+           (list '-u 2 '* (symbol "(") '-u 3 '+ 5 '- (symbol "(") 2 '/ 7 (symbol ")") (symbol ")"))))
+    (is (= (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ")")))
+           (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ")"))))
+    (is (= (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ",") 3 (symbol ")")))
+           (list 'MID3$ (symbol "(") 1 (symbol ",") 2 (symbol ",") 3 (symbol ")"))))
+    (is (= (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") '- 2 '+ 'K (symbol ",") 3 (symbol ")")))
+           (list 'MID3$ (symbol "(") 1 (symbol ",") '-u 2 '+ 'K (symbol ",") 3 (symbol ")"))))))
+
+(deftest anular-invalidos-test
+  (testing "Prueba de la funcion anular-invalidos"
+    (is (= (anular-invalidos '(+ 1 2)) '(+ 1 2)))
+    (is (= (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0)) '(IF X nil * Y < 12 THEN LET nil X = 0)))))

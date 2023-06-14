@@ -40,7 +40,7 @@
 (declare extraer-data)                    ; IMPLEMENTAR
 (declare ejecutar-asignacion)             ; IMPLEMENTAR
 (declare preprocesar-expresion)           ; IMPLEMENTAR
-(declare desambiguar)                     ; IMPLEMENTAR
+(declare desambiguar)                     ; IMPLEMENTAR done
 (declare precedencia)                     ; IMPLEMENTAR
 (declare aridad)                          ; IMPLEMENTAR
 (declare eliminar-cero-decimal)           ; IMPLEMENTAR done
@@ -638,8 +638,8 @@
 ; user=> (palabra-reservada? 'SPACE)
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn palabra-reservada? [x] ;DUDA: MID que va con $ la deberia matchear con $?
-  (let [palabras-reservadas #{"EXIT" "ENV" "DATA" "REM" "NEW" "CLEAR" "LIST" "RUN" "LOAD" "SAVE" "LET" "AND" "OR" "NOT" "ABS" "SGN" "INT" "SQR" "SIN" "COS" "TAN" "ATN" "EXP" "LOG" "LEN" "LEFT" "MID" "RIGHT" "STR" "VAL" "CHR" "ASC" "GOTO" "ON" "IF" "THEN" "FOR" "TO" "STEP" "NEXT" "GOSUB" "RETURN" "END" "INPUT" "READ" "RESTORE" "PRINT"}]
+(defn palabra-reservada? [x]
+  (let [palabras-reservadas #{"EXIT" "ENV" "DATA" "REM" "NEW" "CLEAR" "LIST" "RUN" "LOAD" "SAVE" "LET" "AND" "OR" "NOT" "ABS" "SGN" "INT" "SQR" "SIN" "COS" "TAN" "ATN" "EXP" "LOG" "LEN" "LEFT" "MID$" "RIGHT" "STR" "VAL" "CHR" "ASC" "GOTO" "ON" "IF" "THEN" "FOR" "TO" "STEP" "NEXT" "GOSUB" "RETURN" "END" "INPUT" "READ" "RESTORE" "PRINT"}]
     (cond
       (symbol? x) (contains? palabras-reservadas (str x))
       :else false)))
@@ -655,12 +655,15 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn operador? [x]
-  (let [operadores  #{"+" "-" "*" "/" "^" "<" "=" ">" ">=" "<=" "<>" "AND" "OR" "NOT"}] ; DUDA XOR??
+  (let [operadores  #{"+" "-" "*" "/" "^" "<" "=" ">" ">=" "<=" "<>" "AND" "OR" "NOT"}]
                     
   (cond
     (string? x) (contains? operadores x)
     (symbol? x) (contains? operadores (str x))
     :else false)))
+
+(defn variable? [x]
+  (or (variable-float? x) (variable-string? x) (variable-integer? x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; anular-invalidos: recibe una lista de simbolos y la retorna con
@@ -668,7 +671,8 @@
 ; user=> (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0))
 ; (IF X nil * Y < 12 THEN LET nil X = 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn anular-invalidos [sentencia])
+(defn anular-invalidos [sentencia]
+  (map #(if (or (palabra-reservada? %) (variable? %) (number? %) (string? %) (operador? (str %))) % nil) sentencia))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; añade la linea-agregar en el lugar correspondiente de lineas-actuales
@@ -917,7 +921,12 @@
 ; user=> (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}])
 ; (5 + 0 / 2 * 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn preprocesar-expresion [expr amb])
+(defn preprocesar-expresion [expr amb] ;TODO: implementar
+  (cond
+    (empty? expr) ()
+    (symbol? (first expr)) (cons (get amb (first expr) 0) (preprocesar-expresion (rest expr) amb))
+    (= (first expr) '.') (cons 0 (preprocesar-expresion (rest expr) amb))
+    :else (cons (first expr) (preprocesar-expresion (rest expr) amb))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; desambiguar: recibe un expresion y la retorna sin los + unarios,
@@ -932,7 +941,12 @@
 ; user=> (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") '- 2 '+ 'K (symbol ",") 3 (symbol ")")))
 ; (MID3$ ( 1 , -u 2 + K , 3 ))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn desambiguar [expr])
+(defn desambiguar [expr]
+    (cond
+      (= 'MID$ (first expr)) (let [mid-desambiguado (desambiguar-mid expr)]
+                               (cons (first mid-desambiguado) (desambiguar-mas-menos (rest mid-desambiguado)))) 
+      :else (desambiguar-mas-menos expr))) ;duda usar desambiguar comas?
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; precedencia: recibe un token y retorna el valor de su
