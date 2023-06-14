@@ -42,7 +42,7 @@
 (declare preprocesar-expresion)           ; IMPLEMENTAR
 (declare desambiguar)                     ; IMPLEMENTAR done
 (declare precedencia)                     ; IMPLEMENTAR done
-(declare aridad)                          ; IMPLEMENTAR
+(declare aridad)                          ; IMPLEMENTAR done
 (declare eliminar-cero-decimal)           ; IMPLEMENTAR done
 (declare eliminar-cero-entero)            ; IMPLEMENTAR done
 (declare spy)
@@ -837,7 +837,11 @@
 ; 2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn contar-sentencias [nro-linea amb]
-  )
+  (let [sentencias (first amb)]
+    (reduce + (map (fn [sentencia] (let [num-linea (first sentencia) 
+                                         expandidos-nexts (expandir-nexts (rest sentencia))]
+                           (if (= num-linea nro-linea) (count expandidos-nexts) 0))) sentencias))))
+  
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; buscar-lineas-restantes: recibe un ambiente y retorna la
