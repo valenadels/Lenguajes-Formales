@@ -149,3 +149,16 @@
     (is (= (precedencia '/) 6))
     (is (= (precedencia '-u) 7))
     (is (= (precedencia 'MID$) 8))))
+
+(deftest aridad-test
+  (testing "Prueba de la funcion: aridad"
+    (is (= (aridad 'OR) 2))
+    (is (= (aridad 'AND) 2))
+    (is (= (aridad 'NOT) 1))
+    (is (= (aridad '=) 2))
+    (is (= (aridad '-) 2))
+    (is (= (aridad '/) 2))
+    (is (= (aridad '-u) 1))
+    (is (= (aridad 'MID$) 2))
+    (is (= (aridad 'THEN) 0))
+    (is (= (aridad 'MID3$) 3))))

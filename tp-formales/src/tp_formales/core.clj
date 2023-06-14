@@ -41,7 +41,7 @@
 (declare ejecutar-asignacion)             ; IMPLEMENTAR
 (declare preprocesar-expresion)           ; IMPLEMENTAR
 (declare desambiguar)                     ; IMPLEMENTAR done
-(declare precedencia)                     ; IMPLEMENTAR
+(declare precedencia)                     ; IMPLEMENTAR done
 (declare aridad)                          ; IMPLEMENTAR
 (declare eliminar-cero-decimal)           ; IMPLEMENTAR done
 (declare eliminar-cero-entero)            ; IMPLEMENTAR done
@@ -1002,11 +1002,21 @@
 ; user=> (aridad 'MID3$)
 ; 3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn aridad [token]) ;funciones (funciones y operadores)! que tienen aridad. usar reverse polac annotation
+(defn aridad [token]
+  (let [funciones-1 (set '(SIN EXP LOG INT ATN LEN STR$ CHR$ ASC))]
+    (cond
+      (operador? token) (cond
+                          (= token '-u) 1
+                          (= token 'NOT) 1
+                          :else 2)
+      (contains? funciones-1 token) 1
+      (= token 'MID$) 2
+      (= token 'MID3$) 3
+      :else 0)))
+  ;funciones (funciones y operadores)! que tienen aridad. usar reverse polac annotation
 ;devuelve 0 en caso de no ser una funcion (caso else ) 
 ;token es lo que da la funcion de analisis lexico
- ; [let tokens-aridad-1 ])
-
+ 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; eliminar-cero-decimal: recibe un numero y lo retorna sin ceros
 ; decimales no significativos, por ejemplo: 
