@@ -37,7 +37,7 @@
 (declare contar-sentencias)               ; IMPLEMENTAR done
 (declare buscar-lineas-restantes)         ; IMPLEMENTAR
 (declare continuar-linea)                 ; IMPLEMENTAR
-(declare extraer-data)                    ; IMPLEMENTAR
+(declare extraer-data)                    ; IMPLEMENTAR done
 (declare ejecutar-asignacion)             ; IMPLEMENTAR done
 (declare preprocesar-expresion)           ; IMPLEMENTAR done
 (declare desambiguar)                     ; IMPLEMENTAR done
@@ -862,7 +862,7 @@
 ; user=> (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 1] [] [] [] 0 {}])
 ; ((10 (PRINT Y)) (15 (X = X + 1)) (20 (NEXT I , J)))
 ; user=> (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 0] [] [] [] 0 {}])
-; ((10) (15 (X = X + 1)) (20 (NEXT I , J)))
+; ((10) (15 (X = X + 1)) (20 (NEXT I , J)))   
 ; user=> (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [15 1] [] [] [] 0 {}])
 ; ((15 (X = X + 1)) (20 (NEXT I , J)))
 ; user=> (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [15 0] [] [] [] 0 {}])
@@ -880,7 +880,24 @@
 ; user=> (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [25 0] [] [] [] 0 {}])
 ; nil
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn buscar-lineas-restantes [amb])
+(defn buscar-lineas-restantes [amb]
+  (let [pc (second amb)
+        linea (first pc)
+        cant-lineas-restantes (second pc)]
+    (cond
+      (empty? pc) nil
+      (not (number? linea)) nil
+      :else (let [sentencias (first amb)
+                  lineas-a-partir-de-linea (drop-while (fn [sentencia] (not= linea (first sentencia))) sentencias)]
+              (cond
+                (not= linea (first (first lineas-a-partir-de-linea))) nil ;no se encuentra la linea
+                (>= 0 cant-lineas-restantes) (cons (list linea) (rest lineas-a-partir-de-linea)) 
+                :else
+                (let [lineas-no-actuales (rest lineas-a-partir-de-linea)
+                      lineas-actual (first lineas-a-partir-de-linea)
+                      por-ejecutar (take-last cant-lineas-restantes (expandir-nexts (rest lineas-actual)))]
+                     (cons (cons linea por-ejecutar) lineas-no-actuales)))))))
+      
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; continuar-linea: implementa la sentencia RETURN, retornando una
@@ -895,7 +912,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn continuar-linea [amb])
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; recibe una lista correspondiente a una sub-lista de un programa y 
+; retorna una lista con los valores que se encuentran despues de DATA. 
+; si hay un REM ignora lo que hay despues de este.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn extraer-data-aux [sub-prg]
   (cond
     (empty? sub-prg) ()
