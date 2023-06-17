@@ -662,12 +662,29 @@
       (symbol? x) (contains? operadores (str x))
       :else false)))
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Determina si un identificador es una variable valida segun la sintaxis que debe tener.
+; Es decir, debe comenzar con una letra y luego puede tener letras o numeros (del 0 al 9)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn validar-variable [x]
   (let [regex #"^[a-zA-Z][a-zA-Z0-9]*$"]
     (boolean (re-matches regex (str x)))))
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Determina si x es un identificador de variable string, float o integer, por ejemplo:
+; user=> (variables? 'X)
+; true
+; user=> (variables? 'X1)
+; true
+; user=> (variables? 'X1Y2)
+; true
+; user=> (variables? '1X)
+; false
+; user=> (variables? 'X%)
+; true
+; user=> (variables? 'X$)
+; true
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variables? [x]
   (let [strx (str x)]
     (cond (or (variable-string? x) (variable-integer? x)) (validar-variable (subs strx 0 (dec (count strx))))
@@ -915,7 +932,7 @@
   (cond 
     (empty? linea-return) (vector (dar-error 22 (nth amb 1)) amb)
     :else (let [ultima-linea-return (last linea-return)]
-            (vector :omitir-restante (assoc (assoc amb 1 (vector (first ultima-linea-return) (dec (second ultima-linea-return)))) 2 (pop  linea-return)))))))
+            (vector :omitir-restante (assoc (assoc amb 1 (vector (first ultima-linea-return) (dec (second ultima-linea-return)))) 2 (pop linea-return)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; recibe una lista correspondiente a una sub-lista de un programa y 
