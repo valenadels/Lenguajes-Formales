@@ -170,12 +170,12 @@
     (is (= (contar-sentencias 20 [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 1] [] [] [] 0 {}]) 2))))
 
 
-;; (deftest extraer-data-test
-;;   (testing "Prueba de la función: extraer-data"
-;;     (is (= '() (extraer-data '(()))))
-;;     (is (= (extraer-data (list '(10 (PRINT X) (REM ESTE NO) (DATA 30)) '(20 (DATA HOLA)) (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20)))) '("HOLA" "MUNDO" 10 20)))
+(deftest extraer-data-test
+  (testing "Prueba de la función: extraer-data"
+    (is (= '() (extraer-data '(()))))
+    (is (= (extraer-data (list '(10 (PRINT X) (REM ESTE NO) (DATA 30)) '(20 (DATA HOLA)) (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20)))) '("HOLA" "MUNDO" 10 20)))
     
-;;     ))
+    ))
 
 (deftest ejecutar-asignacion-test
   (testing "Prueba de la función: ejecutar-asignacion"

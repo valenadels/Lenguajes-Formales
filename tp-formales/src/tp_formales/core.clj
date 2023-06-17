@@ -38,7 +38,7 @@
 (declare buscar-lineas-restantes)         ; IMPLEMENTAR
 (declare continuar-linea)                 ; IMPLEMENTAR
 (declare extraer-data)                    ; IMPLEMENTAR
-(declare ejecutar-asignacion)             ; IMPLEMENTAR
+(declare ejecutar-asignacion)             ; IMPLEMENTAR done
 (declare preprocesar-expresion)           ; IMPLEMENTAR done
 (declare desambiguar)                     ; IMPLEMENTAR done
 (declare precedencia)                     ; IMPLEMENTAR done
@@ -895,6 +895,24 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn continuar-linea [amb])
 
+
+(defn extraer-data-aux [sub-prg]
+  (cond
+    (empty? sub-prg) ()
+    (and (list? (first sub-prg)) (= 'DATA (first (first sub-prg)))) (concat (rest (first sub-prg)) (extraer-data-aux (rest sub-prg)))
+    (and (list? (first sub-prg)) (= 'REM (first (first sub-prg)))) ()
+    :else (extraer-data-aux (rest sub-prg))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; acomodar-formato-data: recibe una lista con valores resultantes de extraer-data luego de llamar 
+; a extraer-data-aux y retorna una lista con los valores en el formato correcto,es decir, sin comas
+; y los  strings como strings, por ejemplo:
+; user=> (acomodar-formato-data (list 'HOLA 'MUNDO (symbol ",") 10 (symbol ",") 20)
+; ("HOLA" "MUNDO" 10 20)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn acomodar-formato-data[lista]
+  (map #(if (number? %) % (str %)) (filter #(not (= % (symbol ","))) lista)))  
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; extraer-data: recibe la representación intermedia de un programa
 ; y retorna una lista con todos los valores embebidos en las
@@ -907,9 +925,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn extraer-data [prg]
   (cond
-    (empty? prg) ()
-    (and (list? (first prg)) (= (first (first prg)) 'DATA)) (concat (rest (first prg)) (extraer-data (rest prg)))
-    :else (extraer-data (rest prg))))
+    (empty? (first prg)) ()
+    :else (acomodar-formato-data (flatten (map extraer-data-aux prg)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; ejecutar-asignacion: recibe una asignacion y un ambiente, y
