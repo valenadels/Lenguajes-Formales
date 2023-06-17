@@ -3,21 +3,21 @@
             [tp-formales.core :refer :all]))
 
 (deftest variable-string?-test
-  (testing "Prueba de la funcion: variable-string?"
+  (testing "Prueba de la función: variable-string?"
     (is (= true (variable-string? 'X$))))
   (is (= false (variable-string? 'X)))
   (is (= false (variable-string? 'X%)))
   (is (= false (variable-string? "X$"))))
 
 (deftest variable-integer?-test
-  (testing "Prueba de la funcion: variable-integer?"
+  (testing "Prueba de la función: variable-integer?"
     (is (= false (variable-integer? 'X)))
     (is (= true (variable-integer? 'X%)))
     (is (= false (variable-integer? 'X$)))
     (is (= false (variable-integer? "x")))))
 
 (deftest variable-float?-test
-  (testing "Prueba de la funcion: variable-float?"
+  (testing "Prueba de la función: variable-float?"
     (is (= true (variable-float? 'X)))
     (is (= false (variable-float? 'X%)))
     (is (= false (variable-float? 'X$)))
@@ -25,13 +25,13 @@
     
 
 (deftest eliminar-cero-decimal-test
-  (testing "Prueba de la funcion: eliminar-cero-decimal"
+  (testing "Prueba de la función: eliminar-cero-decimal"
     (is (= 1 (eliminar-cero-decimal 1.0))))
   (is (= 1.1 (eliminar-cero-decimal 1.1)))
   (is (= 'A (eliminar-cero-decimal 'A))))
 
 (deftest eliminar-cero-entero-test
-  (testing "Prueba de la funcion: eliminar-cero-entero"
+  (testing "Prueba de la función: eliminar-cero-entero"
     (is (= " 0" (eliminar-cero-entero 0))))
   (is (= " 1.5" (eliminar-cero-entero 1.5)))
   (is (= " 1" (eliminar-cero-entero 1)))
@@ -43,14 +43,15 @@
 
 
 (deftest expandir-nexts-test
+  (testing "Prueba de la función: expandir-nexts"
   (let [sentences (list '(PRINT 1) (list 'NEXT 'A (symbol ",") 'B))
-        expected-result (list '(PRINT 1) (list 'NEXT 'A) (list 'NEXT 'B))
-        actual-result (expandir-nexts sentences)]
-    (is (= expected-result actual-result))))
+        expected (list '(PRINT 1) (list 'NEXT 'A) (list 'NEXT 'B))
+        actual (expandir-nexts sentences)]
+    (is (= expected actual)))))
 
 
 (deftest cargar-linea-test
-  (testing "Prueba de la funcion: cargar-linea")
+  (testing "Prueba de la función: cargar-linea")
   ;;lista vacia
   (is (= (cargar-linea '(10 (PRINT X)) ['() [:ejecucion-inmediata 0] [] [] [] 0 {}])
          ['((10 (PRINT X))) [:ejecucion-inmediata 0] [] [] [] 0 {}]))
@@ -67,7 +68,7 @@
          ['((10 (PRINT X)) (15 (X = X - 1)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}])))
 
 (deftest operador?-test
-  (testing "Prueba de la funcion: operador?"
+  (testing "Prueba de la función: operador?"
     (is (= true (operador? '+)))
     (is (= true (operador? '-)))
     (is (= true (operador? '*)))
@@ -89,7 +90,7 @@
     (is (= true (operador? "+"))))
 
 (deftest palabra-reservada?-test
-  (testing "Prueba de la funcion: palabra-reservada?" 
+  (testing "Prueba de la función: palabra-reservada?" 
     (is (= true (palabra-reservada? 'IF)))
     (is (= true (palabra-reservada? 'THEN)))
     (is (= false (palabra-reservada? 'ELSE)))
@@ -105,19 +106,19 @@
     (is (= true (palabra-reservada?  'MID$)))))
 
 (deftest dar-error-test
-  (testing "Prueba de la funcion: dar-error"
+  (testing "Prueba de la función: dar-error"
     (is (= (with-out-str (dar-error 16 [:ejecucion-inmediata 4])) "?SYNTAX  ERROR"))
     (is (= (with-out-str (dar-error "?ERROR DISK FULL" [:ejecucion-inmediata 4])) "?ERROR DISK FULL"))
     (is (= (with-out-str (dar-error 16 [100 3])) "?SYNTAX  ERROR IN 100"))
     (is (= (with-out-str (dar-error "?ERROR DISK FULL" [100 3])) "?ERROR DISK FULL IN 100"))))
 
 (deftest preprocesar-expresion-test
-  (testing "Prueba de la funcion: preprocesar-expresion")
+  (testing "Prueba de la función: preprocesar-expresion")
   (is (= (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]) '("HOLA" + " MUNDO" + "")))
   (is (= (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}]) '(5 + 0 / 2 * 0))))
 
 (deftest desambiguar-tests
-  (testing "Prueba de la funcion: desambiguar"
+  (testing "Prueba de la función: desambiguar"
     (is (= (desambiguar (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")")))
            (list '-u 2 '* (symbol "(") '-u 3 '+ 5 '- (symbol "(") 2 '/ 7 (symbol ")") (symbol ")"))))
     (is (= (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ")")))
@@ -128,7 +129,7 @@
            (list 'MID3$ (symbol "(") 1 (symbol ",") '-u 2 '+ 'K (symbol ",") 3 (symbol ")"))))))
 
 (deftest anular-invalidos-test
-  (testing "Prueba de la funcion: anular-invalidos"
+  (testing "Prueba de la función: anular-invalidos"
     (is (= (anular-invalidos '(+ 1 2)) '(+ 1 2)))
 
     (is (= (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0)) '(IF X nil * Y < 12 THEN LET nil X = 0)))
@@ -140,7 +141,7 @@
     (is (= (anular-invalidos '(IF $X & * Y < 12 THEN LET ! X = 0)) '(IF nil nil * Y < 12 THEN LET nil X = 0)))))
 
 (deftest precedencia-test
-  (testing "Prueba de la funcion: precendencia"
+  (testing "Prueba de la función: precendencia"
     (is (= (precedencia 'OR) 1))
     (is (= (precedencia 'AND) 2))
     (is (= (precedencia 'NOT) 3))
@@ -151,7 +152,7 @@
     (is (= (precedencia 'MID$) 8))))
 
 (deftest aridad-test
-  (testing "Prueba de la funcion: aridad"
+  (testing "Prueba de la función: aridad"
     (is (= (aridad 'OR) 2))
     (is (= (aridad 'AND) 2))
     (is (= (aridad 'NOT) 1))
@@ -213,8 +214,17 @@
     (is (= (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 0] [] [] [] 0 {}]) '((20))))
     
     (is (= (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 -1] [] [] [] 0 {}]) '((20))))
-    
+
     (is (= (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [25 0] [] [] [] 0 {}]) nil))))
+
+
+(deftest continuar-linea-test
+  (testing "Pruebas de la función: continuar-linea"
+    (is (= (with-out-str (continuar-linea [(list '(10 (PRINT X)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}])) "?RETURN WITHOUT GOSUB  ERROR IN 20"))
+
+    (is (= (binding [*out* *err*] (continuar-linea [(list '(10 (PRINT X)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}])) (vector nil [(list '(10 (PRINT X)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}]))) ;binding es para no mostrar el mensaje de error en la salida estándar
+
+    (is (= (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}]) (vector :omitir-restante [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [15 1] [] [] [] 0 {}])))))
 
 
   

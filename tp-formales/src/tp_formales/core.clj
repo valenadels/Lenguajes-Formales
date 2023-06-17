@@ -35,7 +35,7 @@
 (declare variable-integer?)               ; IMPLEMENTAR done
 (declare variable-string?)                ; IMPLEMENTAR done
 (declare contar-sentencias)               ; IMPLEMENTAR done
-(declare buscar-lineas-restantes)         ; IMPLEMENTAR
+(declare buscar-lineas-restantes)         ; IMPLEMENTAR done
 (declare continuar-linea)                 ; IMPLEMENTAR
 (declare extraer-data)                    ; IMPLEMENTAR done
 (declare ejecutar-asignacion)             ; IMPLEMENTAR done
@@ -906,11 +906,16 @@
 ; puntero de programa, por ejemplo:
 ; user=> (continuar-linea [(list '(10 (PRINT X)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}])
 ; 
-; ?RETURN WITHOUT GOSUB ERROR IN 20[nil [((10 (PRINT X)) (15 (X = X + 1)) (20 (NEXT I , J))) [20 3] [] [] [] 0 {}]]
+; ?RETURN WITHOUT GOSUB  ERROR IN 20[nil [((10 (PRINT X)) (15 (X = X + 1)) (20 (NEXT I , J))) [20 3] [] [] [] 0 {}]]
 ; user=> (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}])
 ; [:omitir-restante [((10 (PRINT X)) (15 (GOSUB 100) (X = X + 1)) (20 (NEXT I , J))) [15 1] [] [] [] 0 {}]]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn continuar-linea [amb])
+(defn continuar-linea [amb]
+  (let [linea-return (nth amb 2)]
+  (cond 
+    (empty? linea-return) (vector (dar-error 22 (nth amb 1)) amb)
+    :else (let [ultima-linea-return (last linea-return)]
+            (vector :omitir-restante (assoc (assoc amb 1 (vector (first ultima-linea-return) (dec (second ultima-linea-return)))) 2 (pop  linea-return)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; recibe una lista correspondiente a una sub-lista de un programa y 
