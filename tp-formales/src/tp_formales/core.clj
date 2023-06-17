@@ -34,12 +34,12 @@
 (declare variable-float?)                 ; IMPLEMENTAR done
 (declare variable-integer?)               ; IMPLEMENTAR done
 (declare variable-string?)                ; IMPLEMENTAR done
-(declare contar-sentencias)               ; IMPLEMENTAR
+(declare contar-sentencias)               ; IMPLEMENTAR done
 (declare buscar-lineas-restantes)         ; IMPLEMENTAR
 (declare continuar-linea)                 ; IMPLEMENTAR
 (declare extraer-data)                    ; IMPLEMENTAR
 (declare ejecutar-asignacion)             ; IMPLEMENTAR
-(declare preprocesar-expresion)           ; IMPLEMENTAR
+(declare preprocesar-expresion)           ; IMPLEMENTAR done
 (declare desambiguar)                     ; IMPLEMENTAR done
 (declare precedencia)                     ; IMPLEMENTAR done
 (declare aridad)                          ; IMPLEMENTAR done
@@ -656,19 +656,24 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn operador? [x]
   (let [operadores  #{"+" "-" "*" "/" "^" "<" "=" ">" ">=" "<=" "<>" "AND" "OR" "NOT" "-u"}]
-                    
-  (cond
-    (string? x) (contains? operadores x)
-    (symbol? x) (contains? operadores (str x))
-    :else false)))
 
- 
-(defn validar-variable [x] 
+    (cond
+      (string? x) (contains? operadores x)
+      (symbol? x) (contains? operadores (str x))
+      :else false)))
+
+
+(defn validar-variable [x]
   (let [regex #"^[a-zA-Z][a-zA-Z0-9]*$"]
-    (re-matches regex (str x))))
+    (boolean (re-matches regex (str x)))))
 
-(defn variables? [x] 
-  (and (or (variable-float? x) (variable-string? x) (variable-integer? x)) (validar-variable x)))
+
+(defn variables? [x]
+  (let [strx (str x)]
+    (cond (or (variable-string? x) (variable-integer? x)) (validar-variable (subs strx 0 (dec (count strx))))
+          (variable-float? x) (validar-variable x)
+          :else false)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; anular-invalidos: recibe una lista de simbolos y la retorna con
@@ -742,14 +747,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn expandir-nexts [n]
   (if (empty? n) n
-    (let [primer-sentencia (first n)
-          restantes-sentencias (rest n)]
-      (if (and (list? primer-sentencia) (= (first primer-sentencia) 'NEXT))
-        (let [prox-vars (next primer-sentencia)
-              prox-vars-sin-coma (filter #(not= % (symbol ",")) prox-vars)
-              expandidas (map (fn [var] (list 'NEXT var)) prox-vars-sin-coma)]
-          (concat expandidas (expandir-nexts restantes-sentencias)))
-        (cons primer-sentencia (expandir-nexts restantes-sentencias))))))
+      (let [primer-sentencia (first n)
+            restantes-sentencias (rest n)]
+        (if (and (list? primer-sentencia) (= (first primer-sentencia) 'NEXT))
+          (let [prox-vars (next primer-sentencia)
+                prox-vars-sin-coma (filter #(not= % (symbol ",")) prox-vars)
+                expandidas (map (fn [var] (list 'NEXT var)) prox-vars-sin-coma)]
+            (concat expandidas (expandir-nexts restantes-sentencias)))
+          (cons primer-sentencia (expandir-nexts restantes-sentencias))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -776,10 +781,10 @@
       (if (integer? (first prog-ptrs))
         (print (str mensaje-error " IN " (first prog-ptrs)))
         (print mensaje-error)))
-  
+
     (string? cod) (if (integer? (first prog-ptrs))
                     (print (str cod " IN " (first prog-ptrs)))
-                    (print cod)))) 
+                    (print cod))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-float?: predicado para determinar si un identificador
@@ -792,9 +797,9 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-float? [x]
-    (and (symbol? x)
-    (not (or (variable-integer? x) (variable-string? x)))))
-  
+  (and (symbol? x)
+       (not (or (variable-integer? x) (variable-string? x)))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-integer?: predicado para determinar si un identificador
@@ -808,8 +813,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-integer? [x]
   (and (symbol? x)
-  (= (last (str x)) \%)))
-      
+       (= (last (str x)) \%)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-string?: predicado para determinar si un identificador
@@ -822,8 +827,8 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-string? [x]
-    (and (symbol? x)
-    (= (last (str x)) \$)))
+  (and (symbol? x)
+       (= (last (str x)) \$)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; contar-sentencias: recibe un numero de linea y un ambiente y
@@ -838,10 +843,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn contar-sentencias [nro-linea amb]
   (let [sentencias (first amb)]
-    (reduce + (map (fn [sentencia] (let [num-linea (first sentencia) 
+    (reduce + (map (fn [sentencia] (let [num-linea (first sentencia)
                                          expandidos-nexts (expandir-nexts (rest sentencia))]
-                           (if (= num-linea nro-linea) (count expandidos-nexts) 0))) sentencias))))
-  
+                                     (if (= num-linea nro-linea) (count expandidos-nexts) 0))) sentencias))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; buscar-lineas-restantes: recibe un ambiente y retorna la
@@ -896,7 +901,8 @@
 ; sentencias DATA, por ejemplo:
 ; user=> (extraer-data '(()))
 ; ()
-; user=> (extraer-data (list '(10 (PRINT X) (REM ESTE NO) (DATA 30)) '(20 (DATA HOLA)) (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20))))
+; user=> (extraer-data (list '(10 (PRINT X) (REM ESTE NO) (DATA 30)) '(20 (DATA HOLA)) 
+;                             (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20))))
 ; ("HOLA" "MUNDO" 10 20)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn extraer-data [prg]
@@ -918,7 +924,41 @@
 ; user=> (ejecutar-asignacion '(X$ = X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
 ; [((10 (PRINT X))) [10 1] [] [] [] 0 {X$ "HOLA MUNDO"}]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn ejecutar-asignacion [sentencia amb])
+(defn ejecutar-asignacion [sentencia amb]
+  (let [operacion (nthnext sentencia 2) ;; (X + 1) por ejemplo
+        resultado-operacion (calcular-expresion operacion amb)
+        indice 6
+        mapa (nth amb indice)
+        clave (first sentencia)
+        mapa-actualizado (assoc mapa clave resultado-operacion)]     
+    (assoc amb indice mapa-actualizado)))   
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Dada una variable, retorna su valor por defecto, por ejemplo:
+; user=> (valor-default 'X)
+; 0
+; user=> (valor-default 'X$)
+; ""
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn valor-default [x]
+  (cond
+    (variable-integer? x) 0
+    (variable-float? x) 0
+    (variable-string? x) ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Dado un mapa de variables y valores retorna el valor de la variable x si se encuentra en el mapa,
+; o su valor por defecto en caso contrario. Si es un punto devuelve 0. En otro caso devuelve x
+; user=> (map-expresion '{X 5 Y% 2} 'X)
+; 5
+; user=> (map-expresion '{X 5 Y% 2} 'Y)
+; 0
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn map-expresion [mapa-variables x]
+  (cond
+    (variables? x) (get mapa-variables x (valor-default x))
+    (= '. x) 0
+    :else x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; preprocesar-expresion: recibe una expresion y la retorna con
@@ -929,12 +969,11 @@
 ; user=> (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}])
 ; (5 + 0 / 2 * 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn preprocesar-expresion [expr amb] ;TODO: implementar
-  (cond
-    (empty? expr) ()
-    (symbol? (first expr)) (cons (get amb (first expr) 0) (preprocesar-expresion (rest expr) amb))
-    (= (first expr) '.') (cons 0 (preprocesar-expresion (rest expr) amb))
-    :else (cons (first expr) (preprocesar-expresion (rest expr) amb))))
+(defn preprocesar-expresion [expr amb]
+  (let [mapa-variables (nth amb 6)]
+    (map (partial map-expresion mapa-variables) expr)))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; desambiguar: recibe un expresion y la retorna sin los + unarios,
@@ -950,10 +989,10 @@
 ; (MID3$ ( 1 , -u 2 + K , 3 ))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn desambiguar [expr]
-    (cond
-      (= 'MID$ (first expr)) (let [mid-desambiguado (desambiguar-mid expr)]
-                               (cons (first mid-desambiguado) (desambiguar-mas-menos (rest mid-desambiguado)))) 
-      :else (desambiguar-mas-menos expr)))
+  (cond
+    (= 'MID$ (first expr)) (let [mid-desambiguado (desambiguar-mid expr)]
+                             (cons (first mid-desambiguado) (desambiguar-mas-menos (rest mid-desambiguado))))
+    :else (desambiguar-mas-menos expr)))
 
 (defn precedencia-operador [token]
   (cond
@@ -988,7 +1027,7 @@
 ; 8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn precedencia [token] ; SI NO APARECE EN EL MANUAL ES 8, ES DECIR LAS FUNCIONES
-  (cond 
+  (cond
     (operador? token) (precedencia-operador token)
     :else 8))
 
@@ -1017,10 +1056,7 @@
       (= token 'MID$) 2
       (= token 'MID3$) 3
       :else 0)))
-  ;funciones (funciones y operadores)! que tienen aridad. usar reverse polac annotation
-;devuelve 0 en caso de no ser una funcion (caso else ) 
-;token es lo que da la funcion de analisis lexico
- 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; eliminar-cero-decimal: recibe un numero y lo retorna sin ceros
 ; decimales no significativos, por ejemplo: 
@@ -1075,11 +1111,11 @@
                   (and (> n -1) (< n 1)) (cond
                                            (pos? n) (let [nstr (str n)
                                                           splitn (clojure.string/split nstr #"\.")]
-                                                     (str " " "." (second splitn)))
+                                                      (str " " "." (second splitn)))
                                            (zero? n) (str " 0")
                                            :else (let [nstr (str n)
                                                        splitn (clojure.string/split nstr #"\.")]
-                                                  (str "-" "." (second splitn))))
+                                                   (str "-" "." (second splitn))))
                   :else (cond (pos? n) (str " " n)
                               :else (str n)))
     :else (str n)))
