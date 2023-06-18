@@ -22,7 +22,7 @@
     (is (= false (variable-float? 'X%)))
     (is (= false (variable-float? 'X$)))
     (is (= false (variable-float? "x")))))
-    
+
 
 (deftest eliminar-cero-decimal-test
   (testing "Prueba de la función: eliminar-cero-decimal"
@@ -44,10 +44,10 @@
 
 (deftest expandir-nexts-test
   (testing "Prueba de la función: expandir-nexts"
-  (let [sentences (list '(PRINT 1) (list 'NEXT 'A (symbol ",") 'B))
-        expected (list '(PRINT 1) (list 'NEXT 'A) (list 'NEXT 'B))
-        actual (expandir-nexts sentences)]
-    (is (= expected actual)))))
+    (let [sentences (list '(PRINT 1) (list 'NEXT 'A (symbol ",") 'B))
+          expected (list '(PRINT 1) (list 'NEXT 'A) (list 'NEXT 'B))
+          actual (expandir-nexts sentences)]
+      (is (= expected actual)))))
 
 
 (deftest cargar-linea-test
@@ -62,7 +62,7 @@
   ;;agregar al medio
   (is (= (cargar-linea '(15 (X = X + 1)) ['((10 (PRINT X)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}])
          ['((10 (PRINT X)) (15 (X = X + 1)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}]))
-  
+
   ;;reemplazar
   (is (= (cargar-linea '(15 (X = X - 1))  ['((10 (PRINT X)) (15 (X = X + 1)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}])
          ['((10 (PRINT X)) (15 (X = X - 1)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}])))
@@ -87,10 +87,10 @@
     (is (= false (operador? "&")))
     (is (= false (operador? "!")))
     (is (= false (operador? "X"))))
-    (is (= true (operador? "+"))))
+  (is (= true (operador? "+"))))
 
 (deftest palabra-reservada?-test
-  (testing "Prueba de la función: palabra-reservada?" 
+  (testing "Prueba de la función: palabra-reservada?"
     (is (= true (palabra-reservada? 'IF)))
     (is (= true (palabra-reservada? 'THEN)))
     (is (= false (palabra-reservada? 'ELSE)))
@@ -174,19 +174,17 @@
 (deftest extraer-data-test
   (testing "Prueba de la función: extraer-data"
     (is (= '() (extraer-data '(()))))
-    (is (= (extraer-data (list '(10 (PRINT X) (REM ESTE NO) (DATA 30)) '(20 (DATA HOLA)) (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20)))) '("HOLA" "MUNDO" 10 20)))
-    
-    ))
+    (is (= (extraer-data (list '(10 (PRINT X) (REM ESTE NO) (DATA 30)) '(20 (DATA HOLA)) (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20)))) '("HOLA" "MUNDO" 10 20)))))
 
 (deftest ejecutar-asignacion-test
   (testing "Prueba de la función: ejecutar-asignacion"
     (is (= (ejecutar-asignacion '(X = X + 1) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}]) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 3}]))
-    
+
     (is (= (ejecutar-asignacion '(X$ = X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA MUNDO"}]))
-    
+
     (is (= (ejecutar-asignacion '(X = 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}]) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5}]))
-    
-    (is (= (ejecutar-asignacion '(X = 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 {}]) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5}]))))  
+
+    (is (= (ejecutar-asignacion '(X = 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 {}]) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5}]))))
 
 
 (deftest buscar-lineas-restantes-test
@@ -210,9 +208,9 @@
     (is (= (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}]) '((20 (NEXT I) (NEXT J)))))
 
     (is (= (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 1] [] [] [] 0 {}]) '((20 (NEXT J)))))
-    
+
     (is (= (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 0] [] [] [] 0 {}]) '((20))))
-    
+
     (is (= (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 -1] [] [] [] 0 {}]) '((20))))
 
     (is (= (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [25 0] [] [] [] 0 {}]) nil))))
@@ -226,6 +224,19 @@
 
     (is (= (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}]) (vector :omitir-restante [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [15 1] [] [] [] 0 {}])))))
 
-
-  
-
+(deftest aplicar-test
+  (testing "Pruebas de la función: aplicar"
+    (let [numero-linea 10]
+      (is (= (aplicar 'ATN 30 numero-linea) (Math/atan 30)))
+      (is (= (aplicar 'INT 30.5 numero-linea) 30))
+      (is (= (aplicar 'SIN 30 numero-linea) (Math/sin 30)))
+      (is (= (aplicar 'EXP 30 numero-linea) (Math/exp 30)))
+      (is (= (aplicar 'LOG 30 numero-linea) (Math/log 30)))
+      (is (= (aplicar '* 30 40 numero-linea) 1200))
+      (is (= (aplicar '<> 30 40 numero-linea) -1))
+      (is (= (aplicar '<> 30 30 numero-linea) 0))
+      (is (= (aplicar '< 30 40 numero-linea) -1))
+      (is (= (aplicar '< 30 30 numero-linea) 0))
+      (is (= (aplicar '> 40 30 numero-linea) -1))
+      (is (= (aplicar '>= 30 30 numero-linea) -1))
+      (is (= (aplicar 'OR 0 -1 numero-linea) -1)))))

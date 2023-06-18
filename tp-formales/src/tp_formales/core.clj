@@ -604,7 +604,7 @@
        ATN (if (not (number? operando)) (dar-error 163 nro-linea) (Math/atan operando))
        LOG (if (not (number? operando)) (dar-error 163 nro-linea) (if (<= operando 0) (dar-error 53 nro-linea) (Math/log operando)))  ; Illegal quantity error
        EXP (if (not (number? operando)) (dar-error 163 nro-linea) (Math/exp operando))
-       INT (if (not (number? operando)) (dar-error 163 nro-linea) (Math/floor operando))
+       INT (if (not (number? operando)) (dar-error 163 nro-linea) (eliminar-cero-decimal (Math/floor operando)))
        ASC (if (not (string? operando)) (dar-error 163 nro-linea) (if (empty? operando) 0 (int (first operando))))))) ; Type mismatch error
 
   ([operador operando1 operando2 nro-linea]
