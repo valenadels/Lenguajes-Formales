@@ -36,7 +36,7 @@
 (declare variable-string?)                ; IMPLEMENTAR done
 (declare contar-sentencias)               ; IMPLEMENTAR done
 (declare buscar-lineas-restantes)         ; IMPLEMENTAR done
-(declare continuar-linea)                 ; IMPLEMENTAR
+(declare continuar-linea)                 ; IMPLEMENTAR done
 (declare extraer-data)                    ; IMPLEMENTAR done
 (declare ejecutar-asignacion)             ; IMPLEMENTAR done
 (declare preprocesar-expresion)           ; IMPLEMENTAR done
@@ -599,7 +599,14 @@
        -u (- operando)
        LEN (count operando)
        STR$ (if (not (number? operando)) (dar-error 163 nro-linea) (eliminar-cero-entero operando)) ; Type mismatch error
-       CHR$ (if (or (< operando 0) (> operando 255)) (dar-error 53 nro-linea) (str (char operando)))))) ; Illegal quantity error
+       CHR$ (if (or (< operando 0) (> operando 255)) (dar-error 53 nro-linea) (str (char operando))) ; Illegal quantity error
+       SIN (if (not (number? operando)) (dar-error 163 nro-linea) (Math/sin operando))
+       ATN (if (not (number? operando)) (dar-error 163 nro-linea) (Math/atan operando))
+       LOG (if (not (number? operando)) (dar-error 163 nro-linea) (if (<= operando 0) (dar-error 53 nro-linea) (Math/log operando)))  ; Illegal quantity error
+       EXP (if (not (number? operando)) (dar-error 163 nro-linea) (Math/exp operando))
+       INT (if (not (number? operando)) (dar-error 163 nro-linea) (Math/floor operando))
+       ASC (if (not (string? operando)) (dar-error 163 nro-linea) (if (empty? operando) 0 (int (first operando))))))) ; Type mismatch error
+
   ([operador operando1 operando2 nro-linea]
    (if (or (nil? operando1) (nil? operando2))
      (dar-error 16 nro-linea)  ; Syntax error
@@ -612,7 +619,14 @@
            (+ operando1 operando2))
        - (- operando1 operando2)
        / (if (= operando2 0) (dar-error 133 nro-linea) (/ operando1 operando2))  ; Division by zero error
+       * (* operando1 operando2)
+       > (if (> operando1 operando2) -1 0)
+       < (if (<  operando1 operando2) -1 0)
+       >= (if (>= operando1 operando2) -1 0)
+       <= (if (<= operando1 operando2) -1 0)
+       <> (if (not= operando1 operando2) -1 0)
        AND (let [op1 (+ 0 operando1), op2 (+ 0 operando2)] (if (and (not= op1 0) (not= op2 0)) -1 0))
+       OR (let [op1 (+ 0 operando1), op2 (+ 0 operando2)] (if (or (not= op1 0) (not= op2 0)) -1 0))
        MID$ (if (< operando2 1)
               (dar-error 53 nro-linea)  ; Illegal quantity error
               (let [ini (dec operando2)] (if (>= ini (count operando1)) "" (subs operando1 ini)))))))
@@ -639,7 +653,7 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn palabra-reservada? [x]
-  (let [palabras-reservadas #{"EXIT" "ENV" "DATA" "REM" "NEW" "CLEAR" "LIST" "RUN" "LOAD" "SAVE" "LET" "AND" "OR" "NOT" "ABS" "SGN" "INT" "SQR" "SIN" "COS" "TAN" "ATN" "EXP" "LOG" "LEN" "LEFT$" "MID$" "RIGHT$" "STR$" "VAL" "CHR$" "ASC" "GOTO" "ON" "IF" "THEN" "FOR" "TO" "STEP" "NEXT" "GOSUB" "RETURN" "END" "INPUT" "READ" "RESTORE" "PRINT"}]
+  (let [palabras-reservadas #{"EXIT" "ENV" "DATA" "REM" "NEW" "CLEAR" "LIST" "RUN" "LOAD" "SAVE" "LET/=" "AND" "OR" "NOT" "ABS" "SGN" "INT" "SQR" "SIN" "COS" "TAN" "ATN" "EXP" "LOG" "LEN" "LEFT$" "MID$" "RIGHT$" "STR$" "VAL" "CHR$" "ASC" "GOTO" "ON" "IF" "THEN" "FOR" "TO" "STEP" "NEXT" "GOSUB" "RETURN" "END" "INPUT" "READ" "RESTORE" "PRINT"}]
     (cond
       (symbol? x) (contains? palabras-reservadas (str x))
       :else false)))
@@ -908,13 +922,13 @@
                   lineas-a-partir-de-linea (drop-while (fn [sentencia] (not= linea (first sentencia))) sentencias)]
               (cond
                 (not= linea (first (first lineas-a-partir-de-linea))) nil ;no se encuentra la linea
-                (>= 0 cant-lineas-restantes) (cons (list linea) (rest lineas-a-partir-de-linea)) 
+                (>= 0 cant-lineas-restantes) (cons (list linea) (rest lineas-a-partir-de-linea))
                 :else
                 (let [lineas-no-actuales (rest lineas-a-partir-de-linea)
                       lineas-actual (first lineas-a-partir-de-linea)
                       por-ejecutar (take-last cant-lineas-restantes (expandir-nexts (rest lineas-actual)))]
-                     (cons (cons linea por-ejecutar) lineas-no-actuales)))))))
-      
+                  (cons (cons linea por-ejecutar) lineas-no-actuales)))))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; continuar-linea: implementa la sentencia RETURN, retornando una
@@ -929,10 +943,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn continuar-linea [amb]
   (let [linea-return (nth amb 2)]
-  (cond 
-    (empty? linea-return) (vector (dar-error 22 (nth amb 1)) amb)
-    :else (let [ultima-linea-return (last linea-return)]
-            (vector :omitir-restante (assoc (assoc amb 1 (vector (first ultima-linea-return) (dec (second ultima-linea-return)))) 2 (pop linea-return)))))))
+    (cond
+      (empty? linea-return) (vector (dar-error 22 (nth amb 1)) amb)
+      :else (let [ultima-linea-return (last linea-return)]
+              (vector :omitir-restante (assoc (assoc amb 1 (vector (first ultima-linea-return) (dec (second ultima-linea-return)))) 2 (pop linea-return)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; recibe una lista correspondiente a una sub-lista de un programa y 
@@ -953,8 +967,8 @@
 ; user=> (acomodar-formato-data (list 'HOLA 'MUNDO (symbol ",") 10 (symbol ",") 20)
 ; ("HOLA" "MUNDO" 10 20)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn acomodar-formato-data[lista]
-  (map #(if (number? %) % (str %)) (filter #(not (= % (symbol ","))) lista)))  
+(defn acomodar-formato-data [lista]
+  (map #(if (number? %) % (str %)) (filter #(not (= % (symbol ","))) lista)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; extraer-data: recibe la representación intermedia de un programa
@@ -990,8 +1004,8 @@
         indice 6
         mapa (nth amb indice)
         clave (first sentencia)
-        mapa-actualizado (assoc mapa clave resultado-operacion)]     
-    (assoc amb indice mapa-actualizado)))   
+        mapa-actualizado (assoc mapa clave resultado-operacion)]
+    (assoc amb indice mapa-actualizado)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Dada una variable, retorna su valor por defecto, por ejemplo:
