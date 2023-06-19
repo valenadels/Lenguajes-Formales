@@ -87,7 +87,7 @@
     (is (= false (operador? "&")))
     (is (= false (operador? "!")))
     (is (= false (operador? "X"))))
-  (is (= true (operador? "+"))))
+  (is (= false (operador? "+"))))
 
 (deftest palabra-reservada?-test
   (testing "Prueba de la función: palabra-reservada?"

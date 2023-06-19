@@ -80,7 +80,7 @@
                                     (do (dar-error 16 (amb 1)) (driver-loop amb))) ; Syntax error
                 (empty? linea) (driver-loop amb)
                 :else (driver-loop (second (evaluar-linea linea (assoc amb 1 [:ejecucion-inmediata (count (expandir-nexts linea))]))))))
-        (catch Exception e (dar-error (str "?ERROR " (clojure.string/trim (clojure.string/upper-case (get (Throwable->map e) :cause)))) (amb 1)) (driver-loop amb)))))
+        (catch Exception e (dar-error (str "?ERROR " (clojure.string/trim (clojure.string/upper-case (spy (get (Throwable->map e) :cause)))) (amb 1)) (driver-loop amb))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; string-a-tokens: analisis lexico y traduccion del codigo a la
@@ -184,7 +184,7 @@
   ([param-de-read amb]
    (cond
      (= (first (amb 1)) :ejecucion-inmediata) (do (dar-error 15 (amb 1)) [nil amb])  ; Not direct command
-     (empty? param-de-read) (do (dar-error 16 (amb 1)) [nil amb])  ; Syntax error
+     (spy "leer-data" (empty? param-de-read)) (do (dar-error 16 (amb 1)) [nil amb])  ; Syntax error
      :else (leer-data param-de-read (drop (amb 5) (amb 4)) amb)))
   ([variables entradas amb]
    (cond
@@ -210,7 +210,7 @@
    (leer-con-enter param-de-input param-de-input amb))
   ([param-orig param-actualizados amb]
    (let [prim-arg (first param-actualizados), es-cadena (string? prim-arg)]
-     (if (spy "enter" (and es-cadena (not= (second param-actualizados) (symbol ";"))))
+     (if (and es-cadena (not= (second param-actualizados) (symbol ";")))
        (do (dar-error 16 (amb 1)) [nil amb])  ; Syntax error
        (do (if es-cadena
              (print (str prim-arg "? "))
@@ -221,7 +221,7 @@
              (let [variables (if es-cadena (nnext param-actualizados) param-actualizados),
                    valores (butlast (map clojure.string/trim (.split (apply str (.concat (read-line) ",.")) ","))),
                    entradas (map #(let [entr (try (clojure.edn/read-string %) (catch Exception e (str %)))] (if (number? entr) entr (clojure.string/upper-case (str %)))) valores)]
-               (if (spy "enter 2" (empty? variables))
+               (if (empty? variables)
                  (do (dar-error 16 (amb 1)) [nil amb])  ; Syntax error
                  (leer-con-enter variables entradas param-orig param-actualizados amb amb))))))))
   ([variables entradas param-orig param-actualizados amb-orig amb-actualizado]
@@ -233,8 +233,8 @@
      :else (let [res (ejecutar-asignacion (list (first variables) '= (if (variable-string? (first variables)) (str (first entradas)) (first entradas))) amb-actualizado)]
              (if (nil? res)
                [nil amb-actualizado]
-               (if (spy "enter 3" (or (= (count (next variables)) 1)
-                                      (and (> (count (next variables)) 1) (not= (fnext variables) (symbol ",")))))
+               (if (or (= (count (next variables)) 1)
+                                      (and (> (count (next variables)) 1) (not= (fnext variables) (symbol ","))))
                  (do (dar-error 16 (amb-actualizado 1)) [:error-parcial res])  ; Syntax error
                  (recur (nnext variables) (next entradas) param-orig param-actualizados amb-orig res)))))))
 
@@ -343,7 +343,7 @@
 ; 7
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn calcular-expresion [expr amb]
-  (calcular-rpn (spy "shun" (shunting-yard (spy "desamb" (desambiguar (spy "prepro" (preprocesar-expresion expr amb)))))) (amb 1)))
+  (calcular-rpn(shunting-yard  (desambiguar (preprocesar-expresion expr amb))) (amb 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; desambiguar-mas-menos: recibe una expresion y la retorna sin
@@ -400,7 +400,7 @@
           (flatten
            (reduce
             (fn [[rpn pila] token]
-              (let [op-mas? #(and (some? (precedencia %)) (>= (precedencia %) (spy "prece" (precedencia (spy "token" token)))))
+              (let [op-mas? #(and (some? (precedencia %)) (>= (precedencia %) (precedencia token)))
                     no-abre-paren? #(not= (str %) "(")]
                 (cond
                   (= (str token) "(") [rpn (cons token pila)]
@@ -431,7 +431,7 @@
                  (reduced resu)
                  (cons resu (drop ari pila)))))
            [] tokens)]
-      (if (spy "rpn" (> (count resu-redu) 1))
+      (if (> (count resu-redu) 1)
         (dar-error 16 nro-linea)  ; Syntax error
         (first resu-redu)))
     (catch NumberFormatException e 0)
@@ -594,9 +594,9 @@
                   [:sin-errores resu]))
               (do (dar-error 16 (amb 1)) [nil amb])))  ; Syntax error
 
-      ;DATA 
-      ;RESTORE
-      ;READ
+      DATA (spy "dataAAAAAAAAAAAAAA"(assoc amb 4 (concat (amb 4) (rest sentencia))))
+      RESTORE (assoc amb 4 [])
+      READ (leer-data (next sentencia) amb)
 
       (if (= (second sentencia) '=)
         (let [resu (ejecutar-asignacion sentencia amb)]
@@ -613,7 +613,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn aplicar
   ([operador operando nro-linea]
-   (if (spy "aplicar" (nil? operando))
+   (if (nil? operando)
      (dar-error 16 nro-linea)  ; Syntax error
      (case operador
        -u (- operando)
@@ -628,7 +628,7 @@
        ASC (if (not (string? operando)) (dar-error 163 nro-linea) (if (empty? operando) 0 (int (first operando))))))) ; Type mismatch error
 
   ([operador operando1 operando2 nro-linea]
-   (if (spy "aplicar 2" (or  (nil? (spy "op2" operando2)) (nil? (spy "op1" operando1))))
+   (if (or (nil? operando2) (nil? operando1))
      (dar-error 16 nro-linea)  ; Syntax error
      (case operador
        = (if (and (string? operando1) (string? operando2))
@@ -651,7 +651,7 @@
               (dar-error 53 nro-linea)  ; Illegal quantity error
               (let [ini (dec operando2)] (if (>= ini (count operando1)) "" (subs operando1 ini)))))))
   ([operador operando1 operando2 operando3 nro-linea]
-   (if (spy "aplicar 3" (or (nil? operando1) (nil? operando2) (nil? operando3))) (dar-error 16 nro-linea)  ; Syntax error
+   (if (or (nil? operando1) (nil? operando2) (nil? operando3)) (dar-error 16 nro-linea)  ; Syntax error
        (case operador
          MID3$ (let [tam (count operando1), ini (dec operando2), fin (+ (dec operando2) operando3)]
                  (cond
@@ -665,8 +665,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; palabra-reservada?: predicado para determinar si un
-; identificador es una palabra reservada, por ejemplo:
+; palabra-reservada?: predicbra reado para determinar si un
+; identificador es una palaservada, por ejemplo:
 ; user=> (palabra-reservada? 'REM)
 ; true
 ; user=> (palabra-reservada? 'SPACE)
@@ -733,7 +733,13 @@
 ; (IF X nil * Y < 12 THEN LET nil X = 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn anular-invalidos [sentencia]
-  (map #(if (or (palabra-reservada? %) (variables? %) (operador? %) (number? %) (string? %) (signo-puntuacion? %)) % nil) sentencia))
+  (if (= 'REM (first sentencia)) sentencia
+  (map #(if (list? %) (anular-invalidos %)
+         (if (or (palabra-reservada? %) (variables? %) (operador? %) (number? %) (string? %) (signo-puntuacion? %))
+           %
+           nil))
+       sentencia)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; añade la linea-agregar en el lugar correspondiente de lineas-actuales
@@ -849,7 +855,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-float? [x]
   (and (symbol? x)
-       (and (not (or (variable-integer? x) (variable-string? x))) (validar-variable x))))
+       (and (not (variable-integer? x)) (not (variable-string? x)) (not (palabra-reservada? x)) (validar-variable x))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -864,7 +870,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-integer? [x]
   (and (symbol? x)
-       (and (= (last (str x)) \%) (validar-variable (subs (str x) 0 (dec (count (str x))))))))
+       (and (= (last (str x)) \%) (not (palabra-reservada? x)) (validar-variable (subs (str x) 0 (dec (count (str x))))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -879,7 +885,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-string? [x]
   (and (symbol? x)
-       (and (= (last (str x)) \$) (validar-variable (subs (str x) 0 (dec (count (str x))))))))
+       (and (= (last (str x)) \$) (not (palabra-reservada? x)) (validar-variable (subs (str x) 0 (dec (count (str x))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; contar-sentencias: recibe un numero de linea y un ambiente y
@@ -1124,8 +1130,9 @@
 (defn precedencia [token]
   (cond
     (operador? token) (precedencia-operador token)
-    (signo-puntuacion? token) 0
-    :else 8))
+    (= "," (str token)) 0
+    (contains? (set '(SIN EXP LOG INT ATN LEN STR$ CHR$ MID$ MID3$ ASC)) token) 8
+    :else nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; aridad: recibe un token y retorna el valor de su aridad, por
