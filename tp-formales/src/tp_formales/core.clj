@@ -80,7 +80,7 @@
                                     (do (dar-error 16 (amb 1)) (driver-loop amb))) ; Syntax error
                 (empty? linea) (driver-loop amb)
                 :else (driver-loop (second (evaluar-linea linea (assoc amb 1 [:ejecucion-inmediata (count (expandir-nexts linea))]))))))
-        (catch Exception e (dar-error (str "?ERROR " (clojure.string/trim (clojure.string/upper-case (spy (get (Throwable->map e) :cause)))) (amb 1)) (driver-loop amb))))))
+        (catch Exception e (dar-error (str "?ERROR " (clojure.string/trim (clojure.string/upper-case (get (Throwable->map e) :cause)))) (amb 1)) (driver-loop amb)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; string-a-tokens: analisis lexico y traduccion del codigo a la
@@ -184,7 +184,7 @@
   ([param-de-read amb]
    (cond
      (= (first (amb 1)) :ejecucion-inmediata) (do (dar-error 15 (amb 1)) [nil amb])  ; Not direct command
-     (spy "leer-data" (empty? param-de-read)) (do (dar-error 16 (amb 1)) [nil amb])  ; Syntax error
+     (empty? param-de-read) (do (dar-error 16 (amb 1)) [nil amb])  ; Syntax error
      :else (leer-data param-de-read (drop (amb 5) (amb 4)) amb)))
   ([variables entradas amb]
    (cond
@@ -234,7 +234,7 @@
              (if (nil? res)
                [nil amb-actualizado]
                (if (or (= (count (next variables)) 1)
-                                      (and (> (count (next variables)) 1) (not= (fnext variables) (symbol ","))))
+                       (and (> (count (next variables)) 1) (not= (fnext variables) (symbol ","))))
                  (do (dar-error 16 (amb-actualizado 1)) [:error-parcial res])  ; Syntax error
                  (recur (nnext variables) (next entradas) param-orig param-actualizados amb-orig res)))))))
 
@@ -343,7 +343,7 @@
 ; 7
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn calcular-expresion [expr amb]
-  (calcular-rpn(shunting-yard  (desambiguar (preprocesar-expresion expr amb))) (amb 1)))
+  (calcular-rpn (shunting-yard  (desambiguar (preprocesar-expresion expr amb))) (amb 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; desambiguar-mas-menos: recibe una expresion y la retorna sin
@@ -594,7 +594,7 @@
                   [:sin-errores resu]))
               (do (dar-error 16 (amb 1)) [nil amb])))  ; Syntax error
 
-      DATA (spy "dataAAAAAAAAAAAAAA"(assoc amb 4 (concat (amb 4) (rest sentencia))))
+      DATA (assoc amb 4 (concat (amb 4) (rest sentencia)))
       RESTORE (assoc amb 4 [])
       READ (leer-data (next sentencia) amb)
 
@@ -734,11 +734,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn anular-invalidos [sentencia]
   (if (= 'REM (first sentencia)) sentencia
-  (map #(if (list? %) (anular-invalidos %)
-         (if (or (palabra-reservada? %) (variables? %) (operador? %) (number? %) (string? %) (signo-puntuacion? %))
-           %
-           nil))
-       sentencia)))
+      (map #(if (list? %) (anular-invalidos %)
+                (if (or (palabra-reservada? %) (variables? %) (operador? %) (number? %) (string? %) (signo-puntuacion? %))
+                  %
+                  nil))
+           sentencia)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -806,12 +806,12 @@
   (if (empty? n) n
       (let [primer-sentencia (first n)
             restantes-sentencias (rest n)]
-        (if (and (list? primer-sentencia) (= (first primer-sentencia) 'NEXT))
+        (if (and (sequential? primer-sentencia) (= (first primer-sentencia) 'NEXT))
           (let [prox-vars (next primer-sentencia)
                 prox-vars-sin-coma (filter #(not= % (symbol ",")) prox-vars)
                 expandidas (map (fn [var] (list 'NEXT var)) prox-vars-sin-coma)]
             (concat expandidas (expandir-nexts restantes-sentencias)))
-          (cons primer-sentencia (expandir-nexts restantes-sentencias))))))
+          (conj (expandir-nexts restantes-sentencias) primer-sentencia)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
