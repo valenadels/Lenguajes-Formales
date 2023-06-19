@@ -115,7 +115,8 @@
 (deftest preprocesar-expresion-test
   (testing "Prueba de la función: preprocesar-expresion")
   (is (= (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]) '("HOLA" + " MUNDO" + "")))
-  (is (= (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}]) '(5 + 0 / 2 * 0))))
+  (is (= (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}]) '(5 + 0 / 2 * 0))
+      (is (= (preprocesar-expresion '(LEN (W$)) ['((100 (PRINT "ENTER A WORD: ") (INPUT W$)) (110 (T = LEN (W$)) (IF T = 0 THEN 100)) (120 (PRINT "IT'S SPELLED AS FOLLOWS: "))) [110 2] [] [] [] 0 '{W$ "HO"}]) '(LEN ("HO"))))))
 
 (deftest desambiguar-tests
   (testing "Prueba de la función: desambiguar"
@@ -239,4 +240,6 @@
       (is (= (aplicar '< 30 30 numero-linea) 0))
       (is (= (aplicar '> 40 30 numero-linea) -1))
       (is (= (aplicar '>= 30 30 numero-linea) -1))
-      (is (= (aplicar 'OR 0 -1 numero-linea) -1)))))
+      (is (= (aplicar 'OR 0 -1 numero-linea) -1))
+      (is (= (aplicar 'ASC "Aknc" numero-linea) 65))
+      )))

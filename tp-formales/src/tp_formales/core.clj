@@ -23,7 +23,7 @@
 (declare desambiguar-comas)               ; NO TOCAR
 
 (declare evaluar)                         ; COMPLETAR
-(declare aplicar)                         ; COMPLETAR
+(declare aplicar)                         ; COMPLETAR done
 
 (declare palabra-reservada?)              ; IMPLEMENTAR done
 (declare operador?)                       ; IMPLEMENTAR done
@@ -210,7 +210,7 @@
    (leer-con-enter param-de-input param-de-input amb))
   ([param-orig param-actualizados amb]
    (let [prim-arg (first param-actualizados), es-cadena (string? prim-arg)]
-     (if (and es-cadena (not= (second param-actualizados) (symbol ";")))
+     (if (spy "enter" (and es-cadena (not= (second param-actualizados) (symbol ";"))))
        (do (dar-error 16 (amb 1)) [nil amb])  ; Syntax error
        (do (if es-cadena
              (print (str prim-arg "? "))
@@ -221,7 +221,7 @@
              (let [variables (if es-cadena (nnext param-actualizados) param-actualizados),
                    valores (butlast (map clojure.string/trim (.split (apply str (.concat (read-line) ",.")) ","))),
                    entradas (map #(let [entr (try (clojure.edn/read-string %) (catch Exception e (str %)))] (if (number? entr) entr (clojure.string/upper-case (str %)))) valores)]
-               (if (empty? variables)
+               (if (spy "enter 2" (empty? variables))
                  (do (dar-error 16 (amb 1)) [nil amb])  ; Syntax error
                  (leer-con-enter variables entradas param-orig param-actualizados amb amb))))))))
   ([variables entradas param-orig param-actualizados amb-orig amb-actualizado]
@@ -233,8 +233,8 @@
      :else (let [res (ejecutar-asignacion (list (first variables) '= (if (variable-string? (first variables)) (str (first entradas)) (first entradas))) amb-actualizado)]
              (if (nil? res)
                [nil amb-actualizado]
-               (if (or (= (count (next variables)) 1)
-                       (and (> (count (next variables)) 1) (not= (fnext variables) (symbol ","))))
+               (if (spy "enter 3" (or (= (count (next variables)) 1)
+                                      (and (> (count (next variables)) 1) (not= (fnext variables) (symbol ",")))))
                  (do (dar-error 16 (amb-actualizado 1)) [:error-parcial res])  ; Syntax error
                  (recur (nnext variables) (next entradas) param-orig param-actualizados amb-orig res)))))))
 
@@ -343,7 +343,7 @@
 ; 7
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn calcular-expresion [expr amb]
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion expr amb))) (amb 1)))
+  (calcular-rpn (spy "shun" (shunting-yard (spy "desamb" (desambiguar (spy "prepro" (preprocesar-expresion expr amb)))))) (amb 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; desambiguar-mas-menos: recibe una expresion y la retorna sin
@@ -400,7 +400,7 @@
           (flatten
            (reduce
             (fn [[rpn pila] token]
-              (let [op-mas? #(and (some? (precedencia %)) (>= (precedencia %) (precedencia token)))
+              (let [op-mas? #(and (some? (precedencia %)) (>= (precedencia %) (spy "prece" (precedencia (spy "token" token)))))
                     no-abre-paren? #(not= (str %) "(")]
                 (cond
                   (= (str token) "(") [rpn (cons token pila)]
@@ -431,15 +431,15 @@
                  (reduced resu)
                  (cons resu (drop ari pila)))))
            [] tokens)]
-      (if (> (count resu-redu) 1)
+      (if (spy "rpn" (> (count resu-redu) 1))
         (dar-error 16 nro-linea)  ; Syntax error
         (first resu-redu)))
     (catch NumberFormatException e 0)
     (catch ClassCastException e (dar-error 163 nro-linea)) ; Type mismatch error
     (catch UnsupportedOperationException e (dar-error 163 nro-linea)) ; Type mismatch error
     (catch IllegalArgumentException e (dar-error 69 nro-linea))  ; Overflow error
-    (catch Exception e (dar-error 16 nro-linea)))  ; Syntax error
-  )
+    (catch Exception e (dar-error 16 nro-linea))))  ; Syntax error
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; imprimir: recibe una lista de expresiones (separadas o no
@@ -578,6 +578,26 @@
       NEXT (if (<= (count (next sentencia)) 1)
              (retornar-al-for amb (fnext sentencia))
              (do (dar-error 16 (amb 1)) [nil amb]))  ; Syntax error
+
+      END [:sin-errores amb]
+      CLEAR [:sin-errores (assoc amb 6 '{})]
+      LIST (let [resultado (do
+                             (println (imprimir (amb 0) [:sin-errores amb]))
+                             [:sin-errores amb])]
+             resultado)
+
+      LET (let [asignacion (rest sentencia)]
+            (if (= (second asignacion) '=)
+              (let [resu (ejecutar-asignacion asignacion amb)]
+                (if (nil? resu)
+                  [nil amb]
+                  [:sin-errores resu]))
+              (do (dar-error 16 (amb 1)) [nil amb])))  ; Syntax error
+
+      ;DATA 
+      ;RESTORE
+      ;READ
+
       (if (= (second sentencia) '=)
         (let [resu (ejecutar-asignacion sentencia amb)]
           (if (nil? resu)
@@ -593,7 +613,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn aplicar
   ([operador operando nro-linea]
-   (if (nil? operando)
+   (if (spy "aplicar" (nil? operando))
      (dar-error 16 nro-linea)  ; Syntax error
      (case operador
        -u (- operando)
@@ -608,7 +628,7 @@
        ASC (if (not (string? operando)) (dar-error 163 nro-linea) (if (empty? operando) 0 (int (first operando))))))) ; Type mismatch error
 
   ([operador operando1 operando2 nro-linea]
-   (if (or (nil? operando1) (nil? operando2))
+   (if (spy "aplicar 2" (or  (nil? (spy "op2" operando2)) (nil? (spy "op1" operando1))))
      (dar-error 16 nro-linea)  ; Syntax error
      (case operador
        = (if (and (string? operando1) (string? operando2))
@@ -631,7 +651,7 @@
               (dar-error 53 nro-linea)  ; Illegal quantity error
               (let [ini (dec operando2)] (if (>= ini (count operando1)) "" (subs operando1 ini)))))))
   ([operador operando1 operando2 operando3 nro-linea]
-   (if (or (nil? operando1) (nil? operando2) (nil? operando3)) (dar-error 16 nro-linea)  ; Syntax error
+   (if (spy "aplicar 3" (or (nil? operando1) (nil? operando2) (nil? operando3))) (dar-error 16 nro-linea)  ; Syntax error
        (case operador
          MID3$ (let [tam (count operando1), ini (dec operando2), fin (+ (dec operando2) operando3)]
                  (cond
@@ -653,7 +673,7 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn palabra-reservada? [x]
-  (let [palabras-reservadas #{"EXIT" "ENV" "DATA" "REM" "NEW" "CLEAR" "LIST" "RUN" "LOAD" "SAVE" "LET/=" "AND" "OR" "NOT" "ABS" "SGN" "INT" "SQR" "SIN" "COS" "TAN" "ATN" "EXP" "LOG" "LEN" "LEFT$" "MID$" "RIGHT$" "STR$" "VAL" "CHR$" "ASC" "GOTO" "ON" "IF" "THEN" "FOR" "TO" "STEP" "NEXT" "GOSUB" "RETURN" "END" "INPUT" "READ" "RESTORE" "PRINT"}]
+  (let [palabras-reservadas #{"EXIT" "ENV" "DATA" "REM" "NEW" "CLEAR" "LIST" "RUN" "LOAD" "SAVE" "LET" "AND" "OR" "NOT" "ABS" "SGN" "INT" "SQR" "SIN" "COS" "TAN" "ATN" "EXP" "LOG" "LEN" "LEFT$" "MID$" "RIGHT$" "STR$" "VAL" "CHR$" "ASC" "GOTO" "ON" "IF" "THEN" "FOR" "TO" "STEP" "NEXT" "GOSUB" "RETURN" "END" "INPUT" "READ" "RESTORE" "PRINT"}]
     (cond
       (symbol? x) (contains? palabras-reservadas (str x))
       :else false)))
@@ -672,7 +692,6 @@
   (let [operadores  #{"+" "-" "*" "/" "^" "<" "=" ">" ">=" "<=" "<>" "AND" "OR" "NOT" "-u"}]
 
     (cond
-      (string? x) (contains? operadores x)
       (symbol? x) (contains? operadores (str x))
       :else false)))
 
@@ -700,10 +719,11 @@
 ; true
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variables? [x]
-  (let [strx (str x)]
-    (cond (or (variable-string? x) (variable-integer? x)) (validar-variable (subs strx 0 (dec (count strx))))
-          (variable-float? x) (validar-variable x)
-          :else false)))
+  (or (variable-string? x) (variable-integer? x) (variable-float? x)))
+
+(defn signo-puntuacion? [x]
+  (let [signos #{";" "(" ")" "," ":" "."}]
+    (contains? signos (str x))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -713,7 +733,7 @@
 ; (IF X nil * Y < 12 THEN LET nil X = 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn anular-invalidos [sentencia]
-  (map #(if  (or (palabra-reservada? %) (variables? %) (operador? (str %)) (number? %) (string? %)) % nil) sentencia))
+  (map #(if (or (palabra-reservada? %) (variables? %) (operador? %) (number? %) (string? %) (signo-puntuacion? %)) % nil) sentencia))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; añade la linea-agregar en el lugar correspondiente de lineas-actuales
@@ -829,7 +849,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-float? [x]
   (and (symbol? x)
-       (not (or (variable-integer? x) (variable-string? x)))))
+       (and (not (or (variable-integer? x) (variable-string? x))) (validar-variable x))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -844,7 +864,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-integer? [x]
   (and (symbol? x)
-       (= (last (str x)) \%)))
+       (and (= (last (str x)) \%) (validar-variable (subs (str x) 0 (dec (count (str x))))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -859,7 +879,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-string? [x]
   (and (symbol? x)
-       (= (last (str x)) \$)))
+       (and (= (last (str x)) \$) (validar-variable (subs (str x) 0 (dec (count (str x))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; contar-sentencias: recibe un numero de linea y un ambiente y
@@ -1030,9 +1050,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn map-expresion [mapa-variables x]
   (cond
+    (list? x) (map #(map-expresion mapa-variables %) x)
+    (palabra-reservada? x) x
     (variables? x) (get mapa-variables x (valor-default x))
     (= '. x) 0
     :else x))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; preprocesar-expresion: recibe una expresion y la retorna con
@@ -1063,10 +1086,8 @@
 ; (MID3$ ( 1 , -u 2 + K , 3 ))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn desambiguar [expr]
-  (cond
-    (= 'MID$ (first expr)) (let [mid-desambiguado (desambiguar-mid expr)]
-                             (cons (first mid-desambiguado) (desambiguar-mas-menos (rest mid-desambiguado))))
-    :else (desambiguar-mas-menos expr)))
+  (let [mas-menos-des (desambiguar-mas-menos expr)]
+    (desambiguar-mid (desambiguar-comas mas-menos-des))))
 
 (defn precedencia-operador [token]
   (cond
@@ -1100,9 +1121,10 @@
 ; user=> (precedencia 'MID$)
 ; 8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn precedencia [token] ; SI NO APARECE EN EL MANUAL ES 8, ES DECIR LAS FUNCIONES
+(defn precedencia [token]
   (cond
     (operador? token) (precedencia-operador token)
+    (signo-puntuacion? token) 0
     :else 8))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
