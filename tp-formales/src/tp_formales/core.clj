@@ -579,7 +579,7 @@
              (retornar-al-for amb (fnext sentencia))
              (do (dar-error 16 (amb 1)) [nil amb]))  ; Syntax error
 
-      END [:sin-errores amb]
+      END [nil amb]
       CLEAR [:sin-errores (assoc amb 6 '{})]
       LIST (let [resultado (do
                              (println (imprimir (amb 0) [:sin-errores amb]))
