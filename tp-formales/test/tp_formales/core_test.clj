@@ -7,7 +7,8 @@
     (is (= true (variable-string? 'X$))))
   (is (= false (variable-string? 'X)))
   (is (= false (variable-string? 'X%)))
-  (is (= false (variable-string? "X$"))))
+  (is (= false (variable-string? "X$")))
+  (is (= false (variable-string? "LEN"))))
 
 (deftest variable-integer?-test
   (testing "Prueba de la función: variable-integer?"
@@ -21,7 +22,8 @@
     (is (= true (variable-float? 'X)))
     (is (= false (variable-float? 'X%)))
     (is (= false (variable-float? 'X$)))
-    (is (= false (variable-float? "x")))))
+    (is (= false (variable-float? "x")))
+    (is (= false (variable-float? "LEN")))))
 
 
 (deftest eliminar-cero-decimal-test
@@ -47,7 +49,8 @@
     (let [sentences (list '(PRINT 1) (list 'NEXT 'A (symbol ",") 'B))
           expected (list '(PRINT 1) (list 'NEXT 'A) (list 'NEXT 'B))
           actual (expandir-nexts sentences)]
-      (is (= expected actual)))))
+      (is (= expected actual))
+      (is (= (expandir-nexts '((NEXT))) '((NEXT)))))))
 
 
 (deftest cargar-linea-test
@@ -241,5 +244,4 @@
       (is (= (aplicar '> 40 30 numero-linea) -1))
       (is (= (aplicar '>= 30 30 numero-linea) -1))
       (is (= (aplicar 'OR 0 -1 numero-linea) -1))
-      (is (= (aplicar 'ASC "Aknc" numero-linea) 65))
-      )))
+      (is (= (aplicar 'ASC "Aknc" numero-linea) 65)))))

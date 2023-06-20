@@ -807,7 +807,10 @@
           (let [prox-vars (next primer-sentencia)
                 prox-vars-sin-coma (filter #(not= % (symbol ",")) prox-vars)
                 expandidas (map (fn [var] (list 'NEXT var)) prox-vars-sin-coma)]
-            (concat expandidas (expandir-nexts restantes-sentencias)))
+            (cond
+              (empty? prox-vars) (list primer-sentencia)
+              :else
+              (concat expandidas (expandir-nexts restantes-sentencias))))
           (conj (expandir-nexts restantes-sentencias) primer-sentencia)))))
 
 
@@ -854,6 +857,12 @@
   (and (symbol? x)
        (and (not (variable-integer? x)) (not (variable-string? x)) (not (palabra-reservada? x)) (validar-variable x))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; llama a validar variable sacándole el ultimo elemento que es $ o %
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn validar-variable-sin-simbolo [x]
+  (let [xstr (str x)]
+    (validar-variable (subs xstr 0 (dec (count xstr))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-integer?: predicado para determinar si un identificador
@@ -867,8 +876,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-integer? [x]
   (and (symbol? x)
-       (and (= (last (str x)) \%) (not (palabra-reservada? x)) (validar-variable (subs (str x) 0 (dec (count (str x))))))))
-
+       (and (= (last (str x)) \%) (not (palabra-reservada? x)) (validar-variable-sin-simbolo x))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-string?: predicado para determinar si un identificador
@@ -882,7 +890,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn variable-string? [x]
   (and (symbol? x)
-       (and (= (last (str x)) \$) (not (palabra-reservada? x)) (validar-variable (subs (str x) 0 (dec (count (str x))))))))
+       (and (= (last (str x)) \$) (not (palabra-reservada? x)) (validar-variable-sin-simbolo x))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; contar-sentencias: recibe un numero de linea y un ambiente y
@@ -1207,6 +1215,7 @@
 (defn eliminar-cero-entero [n]
   (cond
     (nil? n) nil
+    (ratio? n) (eliminar-cero-entero (float n))
     (number? n) (cond
                   (and (> n -1) (< n 1)) (cond
                                            (pos? n) (let [nstr (str n)
