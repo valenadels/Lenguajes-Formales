@@ -6,6 +6,5 @@ acepta,  además  de  sentencias  de  COMMODORE  64  BASIC  V2,  los  comandos  
 
 
 ## Uso
-Desde el directorio /tp_formales:
 `lein test` corre los tests.
 `lein run` corre el intérprete. Para cargar los programas: `load <programa.bas>`

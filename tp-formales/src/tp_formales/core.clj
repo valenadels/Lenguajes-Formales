@@ -581,7 +581,7 @@
 
       END [nil amb]
       CLEAR [:sin-errores (assoc amb 6 '{})]
-      LIST (mostrar-listado (first amb))
+      LIST (do (mostrar-listado (first amb)) [:sin-errores amb])
 
       LET (let [asignacion (rest sentencia)]
             (if (= (second asignacion) '=)
