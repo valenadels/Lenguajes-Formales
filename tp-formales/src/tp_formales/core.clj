@@ -22,7 +22,7 @@
 (declare imprimir)                        ; NO TOCAR
 (declare desambiguar-comas)               ; NO TOCAR
 
-(declare evaluar)                         ; COMPLETAR
+(declare evaluar)                         ; COMPLETAR done
 (declare aplicar)                         ; COMPLETAR done
 
 (declare palabra-reservada?)              ; IMPLEMENTAR done
@@ -581,10 +581,7 @@
 
       END [nil amb]
       CLEAR [:sin-errores (assoc amb 6 '{})]
-      LIST (let [resultado (do
-                             (println (imprimir (amb 0) [:sin-errores amb]))
-                             [:sin-errores amb])]
-             resultado)
+      LIST (mostrar-listado (first amb))
 
       LET (let [asignacion (rest sentencia)]
             (if (= (second asignacion) '=)
@@ -595,7 +592,7 @@
               (do (dar-error 16 (amb 1)) [nil amb])))  ; Syntax error
 
       DATA (assoc amb 4 (concat (amb 4) (rest sentencia)))
-      RESTORE (assoc amb 4 [])
+      RESTORE [:sin-errores (assoc amb 5 0)]
       READ (leer-data (next sentencia) amb)
 
       (if (= (second sentencia) '=)
@@ -982,8 +979,8 @@
 (defn extraer-data-aux [sub-prg]
   (cond
     (empty? sub-prg) ()
-    (and (list? (first sub-prg)) (= 'DATA (first (first sub-prg)))) (concat (rest (first sub-prg)) (extraer-data-aux (rest sub-prg)))
-    (and (list? (first sub-prg)) (= 'REM (first (first sub-prg)))) ()
+    (and (seq? (first sub-prg)) (= 'DATA (first (first sub-prg)))) (concat (rest (first sub-prg)) (extraer-data-aux (rest sub-prg)))
+    (and (seq? (first sub-prg)) (= 'REM (first (first sub-prg)))) ()
     :else (extraer-data-aux (rest sub-prg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
